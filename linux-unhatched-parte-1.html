@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prática de Sistemas Abertos — Linux Unhatched | Parte 1</title>
+  <style>
+    :root{
+      --bg:#070b1f; --bg2:#0d1333; --panel:#111a3fdd; --panel2:#172153ee;
+      --cyan:#22d3ee; --blue:#3b82f6; --violet:#8b5cf6; --pink:#ec4899; --green:#34d399; --yellow:#fbbf24; --red:#fb7185;
+      --text:#f8fafc; --muted:#cbd5e1; --soft:#94a3b8; --line:#334155; --code:#0b1228;
+      --shadow:0 24px 60px rgba(0,0,0,.36); --radius:26px;
+    }
+    *{box-sizing:border-box} html,body{height:100%;margin:0;overflow:hidden;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    body:before{content:"";position:fixed;inset:0;background:
+      radial-gradient(circle at 12% 18%,rgba(34,211,238,.20),transparent 32%),
+      radial-gradient(circle at 78% 12%,rgba(139,92,246,.22),transparent 30%),
+      radial-gradient(circle at 65% 86%,rgba(59,130,246,.18),transparent 36%),
+      linear-gradient(135deg,#070b1f,#0b102b 55%,#090a20);z-index:-3}
+    .particles{position:fixed;inset:0;z-index:-2;opacity:.55;background-image:radial-gradient(circle,rgba(255,255,255,.35) 1px,transparent 1px);background-size:44px 44px;animation:drift 24s linear infinite}
+    @keyframes drift{from{transform:translate3d(0,0,0)}to{transform:translate3d(-44px,-44px,0)}}
+    .aurora{position:fixed;width:52vw;height:52vw;left:-18vw;bottom:-28vw;background:conic-gradient(from 180deg,rgba(34,211,238,.25),rgba(139,92,246,.08),rgba(236,72,153,.17),rgba(34,211,238,.25));filter:blur(70px);border-radius:50%;z-index:-2;animation:pulse 10s ease-in-out infinite alternate}
+    @keyframes pulse{to{transform:translate(15vw,-7vw) scale(1.2)}}
+
+    .topbar{position:fixed;top:0;left:0;right:0;height:62px;display:flex;align-items:center;gap:16px;padding:10px 22px;background:rgba(5,10,31,.78);backdrop-filter:blur(18px);border-bottom:1px solid rgba(148,163,184,.18);z-index:10}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.2px;white-space:nowrap}.brand .logo{width:40px;height:40px;border-radius:15px;background:linear-gradient(135deg,var(--cyan),var(--violet));display:grid;place-items:center;box-shadow:0 0 28px rgba(34,211,238,.35)}
+    .progressWrap{flex:1;height:10px;border-radius:999px;background:rgba(148,163,184,.18);overflow:hidden}.progress{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--blue),var(--violet));box-shadow:0 0 22px rgba(34,211,238,.5);transition:width .35s ease}
+    .counter{color:var(--muted);font-size:14px;font-weight:800;min-width:90px;text-align:center}.topbtn{border:1px solid rgba(148,163,184,.2);background:rgba(15,23,42,.68);color:var(--text);border-radius:999px;padding:9px 12px;font-weight:800;cursor:pointer;transition:.2s}.topbtn:hover{border-color:var(--cyan);transform:translateY(-1px);box-shadow:0 0 0 4px rgba(34,211,238,.10)}
+
+    #deck{height:100vh;width:100vw;position:relative}.slide{position:absolute;inset:62px 0 72px 0;padding:42px 62px;display:none;opacity:0;transform:translateY(18px) scale(.985);transition:.35s ease;overflow:hidden}.slide.active{display:block;opacity:1;transform:translateY(0) scale(1);animation:enter .42s ease both}@keyframes enter{from{filter:blur(8px);opacity:0}to{filter:blur(0);opacity:1}}
+    .slideContent{height:100%;max-width:1280px;margin:0 auto;display:flex;flex-direction:column}.kicker{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;padding:8px 13px;border-radius:999px;background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.30);color:#a5f3fc;font-weight:900;font-size:14px;text-transform:uppercase;letter-spacing:.08em}.title{font-size:clamp(38px,5vw,76px);line-height:0.98;margin:18px 0 16px;font-weight:950;letter-spacing:-.045em}.title .grad,.grad{background:linear-gradient(90deg,#fff,var(--cyan),#c4b5fd);-webkit-background-clip:text;background-clip:text;color:transparent}.subtitle{font-size:clamp(21px,2.25vw,31px);color:var(--muted);line-height:1.45;max-width:950px}.sectionTitle{font-size:clamp(31px,3.5vw,54px);line-height:1.04;margin:0 0 18px;font-weight:950;letter-spacing:-.035em}.lead{font-size:clamp(19px,1.55vw,24px);line-height:1.48;color:var(--muted);max-width:980px}.row{display:flex;gap:26px;align-items:stretch}.col{flex:1}.grid{display:grid;gap:22px}.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid4{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .card{background:linear-gradient(180deg,rgba(15,23,42,.82),rgba(17,24,61,.86));border:1px solid rgba(148,163,184,.19);box-shadow:var(--shadow);border-radius:var(--radius);padding:24px;position:relative;overflow:hidden}.card:after{content:"";position:absolute;inset:auto -30% -55% -30%;height:80%;background:radial-gradient(circle,rgba(34,211,238,.10),transparent 58%);pointer-events:none}.card h3{margin:0 0 10px;font-size:25px}.card p{margin:0;color:var(--muted);font-size:18px;line-height:1.45}.mini{font-size:15px;color:var(--soft);line-height:1.45}.icon{font-size:38px;width:62px;height:62px;border-radius:20px;display:grid;place-items:center;background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.24);margin-bottom:15px}.bigIcon{font-size:96px;filter:drop-shadow(0 18px 30px rgba(0,0,0,.36))}.pill{display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border-radius:999px;background:rgba(15,23,42,.75);border:1px solid rgba(148,163,184,.22);font-weight:900;color:#dbeafe}.callout{border-left:5px solid var(--cyan);background:linear-gradient(90deg,rgba(34,211,238,.12),rgba(139,92,246,.08));padding:20px 24px;border-radius:20px;color:var(--muted);font-size:20px;line-height:1.45}.quote{font-size:24px;line-height:1.35;color:#e0f2fe;border-left:5px solid var(--violet);padding:18px 24px;background:rgba(139,92,246,.12);border-radius:0 24px 24px 0}.terminal{background:linear-gradient(180deg,#0b1020,#050816);border:1px solid rgba(148,163,184,.22);border-radius:22px;box-shadow:0 22px 45px rgba(0,0,0,.35);overflow:hidden;font-family:"Fira Code",Consolas,Monaco,monospace}.terminal .bar{height:42px;background:#111827;display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:1px solid rgba(148,163,184,.15)}.dot{width:12px;height:12px;border-radius:999px;background:#fb7185}.dot:nth-child(2){background:#fbbf24}.dot:nth-child(3){background:#34d399}.terminal pre{margin:0;padding:20px;font-size:18px;line-height:1.55;white-space:pre-wrap;color:#e5e7eb}.prompt{color:#34d399}.cmd{color:#60a5fa}.out{color:#cbd5e1}.err{color:#fb7185}.warn{color:#fbbf24}.hl{color:#22d3ee;font-weight:900}.commandBox{font-family:Consolas,monospace;font-size:32px;text-align:center;padding:24px;border-radius:24px;background:#0b1228;border:1px solid rgba(34,211,238,.25);box-shadow:inset 0 0 40px rgba(34,211,238,.08)}
+    .chips{display:flex;gap:10px;flex-wrap:wrap}.chip{border:1px solid rgba(148,163,184,.24);background:rgba(15,23,42,.78);color:var(--text);border-radius:999px;padding:10px 14px;font-weight:900;cursor:pointer}.chip.active,.chip:hover{background:linear-gradient(90deg,var(--blue),var(--violet));border-color:transparent}.tabs{display:flex;gap:10px;margin:20px 0 18px;flex-wrap:wrap}.tab{padding:11px 16px;border-radius:999px;border:1px solid rgba(148,163,184,.22);background:rgba(15,23,42,.72);color:var(--muted);font-weight:900;cursor:pointer}.tab.active{color:#fff;background:linear-gradient(90deg,var(--cyan),var(--violet));border-color:transparent}.tabPanel{display:none}.tabPanel.active{display:block}
+    .timeline{position:relative;margin-top:22px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.step{background:rgba(15,23,42,.74);border:1px solid rgba(148,163,184,.22);border-radius:24px;padding:20px;min-height:170px}.step .num{width:38px;height:38px;border-radius:14px;background:linear-gradient(135deg,var(--cyan),var(--violet));display:grid;place-items:center;font-weight:950;margin-bottom:12px}.pathMap{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:22px 0}.folder{padding:12px 16px;border-radius:18px;background:rgba(34,211,238,.11);border:1px solid rgba(34,211,238,.24);font-family:Consolas,monospace;font-weight:900}.arrow{color:var(--cyan);font-size:28px}.hotline{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.hot{border:1px solid rgba(148,163,184,.25);border-radius:13px;padding:10px 12px;background:rgba(15,23,42,.8);font-family:Consolas,monospace;font-weight:900;cursor:pointer}.hot.active{background:rgba(34,211,238,.2);border-color:var(--cyan);color:#a5f3fc}.explain{min-height:92px;margin-top:14px;padding:16px 18px;border-radius:18px;background:rgba(34,211,238,.09);border:1px solid rgba(34,211,238,.22);color:var(--muted);font-size:18px;line-height:1.45}.split{display:grid;grid-template-columns:1.06fr .94fr;gap:26px;align-items:center}.compare{display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:center}.vs{font-size:32px;font-weight:950;color:#64748b}.sidePanel{border-radius:30px;padding:30px;border:1px solid rgba(148,163,184,.22);background:rgba(15,23,42,.78);box-shadow:var(--shadow)}.sidePanel.primary{background:linear-gradient(180deg,rgba(14,116,144,.28),rgba(15,23,42,.82));border-color:rgba(34,211,238,.32)}
+    .nav{position:fixed;left:0;right:0;bottom:0;height:72px;background:rgba(5,10,31,.82);backdrop-filter:blur(18px);border-top:1px solid rgba(148,163,184,.18);display:flex;align-items:center;justify-content:center;gap:18px;z-index:10}.nav button{border:0;border-radius:999px;padding:13px 20px;background:rgba(15,23,42,.9);color:var(--text);font-weight:950;cursor:pointer;border:1px solid rgba(148,163,184,.2)}.nav button:hover{border-color:var(--cyan);box-shadow:0 0 0 4px rgba(34,211,238,.10)}.nav button.primary{background:linear-gradient(90deg,var(--blue),var(--violet));border:0}.nav button:disabled{opacity:.35;cursor:not-allowed}.dots{display:flex;gap:7px;align-items:center;max-width:340px;overflow:hidden}.sdot{width:9px;height:9px;border-radius:999px;background:rgba(148,163,184,.35);transition:.2s}.sdot.active{width:30px;background:var(--cyan)}
+    .modal{position:fixed;inset:0;background:rgba(2,6,23,.84);backdrop-filter:blur(18px);display:none;z-index:30;padding:74px 42px}.modal.active{display:block}.modalBox{max-width:1120px;margin:0 auto;background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(17,24,61,.98));border:1px solid rgba(148,163,184,.22);border-radius:32px;padding:28px;box-shadow:var(--shadow);max-height:calc(100vh - 140px);overflow:auto}.modalHeader{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.close{border:1px solid rgba(148,163,184,.24);background:rgba(15,23,42,.9);color:#fff;border-radius:999px;padding:10px 14px;font-weight:900;cursor:pointer}.overviewGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.thumb{min-height:118px;border-radius:22px;background:rgba(15,23,42,.84);border:1px solid rgba(148,163,184,.22);padding:16px;cursor:pointer}.thumb:hover{border-color:var(--cyan);transform:translateY(-2px)}.thumb b{display:block;margin-bottom:8px;color:#a5f3fc}.quizBox{max-width:1040px;margin:0 auto}.question{display:none}.question.active{display:block}.option{display:block;margin:12px 0;padding:15px 18px;border-radius:18px;background:rgba(15,23,42,.76);border:1px solid rgba(148,163,184,.22);cursor:pointer;font-size:19px}.option:hover{border-color:var(--cyan)}.option.correct{background:rgba(52,211,153,.16);border-color:var(--green)}.option.wrong{background:rgba(251,113,133,.14);border-color:var(--red)}.quizNav{display:flex;justify-content:space-between;gap:12px;margin-top:18px}.resultBadge{font-size:42px;font-weight:950}.qr{width:180px;height:180px;border-radius:30px;background:linear-gradient(135deg,rgba(34,211,238,.2),rgba(139,92,246,.2));border:1px solid rgba(148,163,184,.22);display:grid;place-items:center;font-size:66px}
+    @media(max-width:900px){.slide{padding:26px 18px;inset:62px 0 72px 0;overflow:auto}.grid2,.grid3,.grid4,.split,.compare,.timeline{grid-template-columns:1fr}.row{flex-direction:column}.overviewGrid{grid-template-columns:1fr}.topbar{gap:8px;padding:8px 10px}.topbtn span{display:none}.counter{min-width:58px}.nav{gap:8px}.nav button{padding:11px 13px}.dots{display:none}.terminal pre{font-size:15px}.title{font-size:44px}.sectionTitle{font-size:34px}}
+  </style>
+</head>
+<body>
+  <div class="particles"></div><div class="aurora"></div>
+  <header class="topbar">
+    <div class="brand"><div class="logo">🐧</div><div><div>Prática de Sistemas Abertos</div><small style="color:var(--soft);font-weight:800">Linux Unhatched · Parte 1</small></div></div>
+    <div class="progressWrap"><div class="progress" id="progress"></div></div>
+    <div class="counter" id="counter">1 / 15</div>
+    <button class="topbtn" onclick="openModal('overview')">☷ <span>Visão geral</span></button>
+    <button class="topbtn" onclick="openModal('sources')">☑ <span>Fontes</span></button>
+    <button class="topbtn" onclick="openModal('help')">? <span>Ajuda</span></button>
+    <button class="topbtn" onclick="toggleFull()">⛶</button>
+  </header>
+
+  <main id="deck">
+    <section class="slide active" data-title="Abertura">
+      <div class="slideContent split">
+        <div>
+          <span class="kicker">Aula 01 · Primeiro contato</span>
+          <h1 class="title">O mundo do <span class="grad">Linux</span></h1>
+          <p class="subtitle">Uma introdução prática à linha de comando, aos caminhos, à listagem de arquivos e ao uso responsável do acesso administrativo.</p>
+          <div class="chips" style="margin-top:30px">
+            <span class="pill">🐧 Linux Unhatched</span><span class="pill">💻 CLI</span><span class="pill">🧭 Navegação</span><span class="pill">🔐 sudo/root</span>
+          </div>
+        </div>
+        <div class="card" style="min-height:470px;display:grid;place-items:center;text-align:center">
+          <div>
+            <div class="bigIcon">⌨️</div>
+            <h2 style="font-size:42px;margin:22px 0 8px">Da curiosidade ao comando</h2>
+            <p style="font-size:21px">Hoje a turma deixa de apenas “usar” o computador e começa a conversar com o sistema operacional.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Objetivos">
+      <div class="slideContent">
+        <span class="kicker">Mapa da aula</span>
+        <h2 class="sectionTitle">Ao final desta primeira parte, você deverá conseguir...</h2>
+        <div class="timeline">
+          <div class="step"><div class="num">1</div><h3>Reconhecer o Linux</h3><p class="mini">Entender onde ele aparece no cotidiano: servidores, nuvem, Android, IoT e redes.</p></div>
+          <div class="step"><div class="num">2</div><h3>Diferenciar GUI e CLI</h3><p class="mini">Perceber por que a linha de comando é tão poderosa para administração e troubleshooting.</p></div>
+          <div class="step"><div class="num">3</div><h3>Ler comandos</h3><p class="mini">Identificar comando, opções e argumentos sem decorar tudo de uma vez.</p></div>
+          <div class="step"><div class="num">4</div><h3>Navegar com segurança</h3><p class="mini">Usar <b>pwd</b>, <b>cd</b>, caminhos, <b>ls</b> e entender quando usar <b>sudo</b>.</p></div>
+        </div>
+        <div class="callout" style="margin-top:26px"><b>Combinado da aula:</b> errar comando faz parte. O importante é ler a mensagem do terminal, ajustar e tentar novamente.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Linux por todos os lados">
+      <div class="slideContent">
+        <span class="kicker">Por que isso importa?</span>
+        <h2 class="sectionTitle">O Linux está em muito mais lugares do que apenas no desktop.</h2>
+        <p class="lead">Mesmo que muitos usuários não vejam o Linux diretamente, ele sustenta serviços e equipamentos que usamos todos os dias.</p>
+        <div class="grid grid4" style="margin-top:28px">
+          <div class="card"><div class="icon">☁️</div><h3>Nuvem</h3><p>Servidores que hospedam sites, sistemas e plataformas de aprendizagem.</p></div>
+          <div class="card"><div class="icon">📱</div><h3>Android</h3><p>Dispositivos móveis usam o kernel Linux como base do sistema.</p></div>
+          <div class="card"><div class="icon">📡</div><h3>Redes</h3><p>Roteadores, firewalls, appliances e sistemas de rede frequentemente usam Linux.</p></div>
+          <div class="card"><div class="icon">🏠</div><h3>IoT</h3><p>Smart TVs, câmeras, automação e dispositivos embarcados.</p></div>
+        </div>
+        <div class="quote" style="margin-top:26px">“Do roteador doméstico ao servidor do curso, há grandes chances de vários dispositivos Linux estarem trabalhando nos bastidores.”</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Carreiras e Linux">
+      <div class="slideContent">
+        <span class="kicker">Aprender para aplicar</span>
+        <h2 class="sectionTitle">Linux abre portas em várias áreas de TI.</h2>
+        <div class="grid grid2" style="margin-top:12px">
+          <div class="card"><div class="icon">🌐</div><h3>Redes</h3><p>Sistemas operacionais de rede, servidores, roteadores e serviços de infraestrutura exigem familiaridade com Linux.</p></div>
+          <div class="card"><div class="icon">🛡️</div><h3>Cibersegurança</h3><p>Distribuições e ferramentas de análise, auditoria e testes de segurança fazem uso intenso da linha de comando.</p></div>
+          <div class="card"><div class="icon">👨‍💻</div><h3>Desenvolvimento</h3><p>Scripts, automação, Git, containers e ambientes de produção são fortemente ligados ao ecossistema Linux.</p></div>
+          <div class="card"><div class="icon">📊</div><h3>Dados</h3><p>Python, R, bancos de dados e pipelines costumam rodar em ambientes Linux pela flexibilidade e variedade de ferramentas.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="GUI vs CLI">
+      <div class="slideContent">
+        <span class="kicker">Duas formas de conversar com o sistema</span>
+        <h2 class="sectionTitle">GUI facilita. CLI revela e automatiza.</h2>
+        <div class="compare" style="margin-top:26px">
+          <div class="sidePanel"><div class="bigIcon">🖱️</div><h3 style="font-size:34px;margin:18px 0 10px">GUI</h3><p class="lead">Interface gráfica com janelas, ícones, menus e mouse. É intuitiva e visual, ótima para tarefas comuns.</p><div class="chips" style="margin-top:18px"><span class="pill">visual</span><span class="pill">amigável</span><span class="pill">mais recursos</span></div></div>
+          <div class="vs">VS</div>
+          <div class="sidePanel primary"><div class="bigIcon">⌨️</div><h3 style="font-size:34px;margin:18px 0 10px">CLI</h3><p class="lead">Interface de texto. É eficiente para administrar, automatizar e diagnosticar problemas com precisão.</p><div class="chips" style="margin-top:18px"><span class="pill">rápida</span><span class="pill">scriptável</span><span class="pill">profissional</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Sintaxe dos comandos">
+      <div class="slideContent">
+        <span class="kicker">A fórmula básica</span>
+        <h2 class="sectionTitle">A maioria dos comandos segue um padrão.</h2>
+        <div class="commandBox">comando <span class="grad">[opções]</span> <span style="color:#a7f3d0">[argumentos]</span></div>
+        <div class="grid grid3" style="margin-top:26px">
+          <div class="card"><h3>1. Comando</h3><p>É o programa ou ação principal. Exemplo: <code>ls</code>, <code>pwd</code>, <code>cd</code>.</p></div>
+          <div class="card"><h3>2. Opções</h3><p>Alteram o comportamento do comando. Geralmente começam com hífen: <code>-l</code>, <code>-r</code>, <code>-t</code>.</p></div>
+          <div class="card"><h3>3. Argumentos</h3><p>Indicam o alvo da ação. Exemplo: <code>Documents</code> em <code>ls Documents</code>.</p></div>
+        </div>
+        <div class="terminal" style="margin-top:24px"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="prompt">sysadmin@localhost:~$</span> <span class="cmd">ls</span> <span class="warn">-l</span> <span class="hl">Documents</span>
+<span class="out">comando: ls  |  opção: -l  |  argumento: Documents</span></pre></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Case-sensitive">
+      <div class="slideContent split">
+        <div>
+          <span class="kicker">Atenção aos detalhes</span>
+          <h2 class="sectionTitle">No Linux, letras maiúsculas e minúsculas fazem diferença.</h2>
+          <p class="lead">Isso se chama <b>case-sensitive</b>. Para o terminal, <code>ls</code>, <code>LS</code> e <code>Ls</code> podem ser coisas diferentes.</p>
+          <div class="callout" style="margin-top:24px">Dica para a turma: antes de pensar que “o Linux quebrou”, confira se o comando foi digitado exatamente como deveria.</div>
+        </div>
+        <div class="terminal"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="prompt">sysadmin@localhost:~$</span> <span class="cmd">ls</span>
+<span class="out">Desktop  Documents  Downloads  Music  Pictures</span>
+
+<span class="prompt">sysadmin@localhost:~$</span> <span class="cmd">LS</span>
+<span class="err">bash: LS: command not found</span></pre></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Terminal interativo">
+      <div class="slideContent split">
+        <div>
+          <span class="kicker">Prática rápida</span>
+          <h2 class="sectionTitle">Clique em um comando e veja o resultado esperado.</h2>
+          <p class="lead">Use esta tela como aquecimento antes de abrir o laboratório real.</p>
+          <div class="chips" style="margin-top:22px">
+            <button class="chip active" onclick="terminalDemo('ls',this)">ls</button>
+            <button class="chip" onclick="terminalDemo('lsDocs',this)">ls Documents</button>
+            <button class="chip" onclick="terminalDemo('lsr',this)">ls -r</button>
+            <button class="chip" onclick="terminalDemo('pwd',this)">pwd</button>
+            <button class="chip" onclick="terminalDemo('cd',this)">cd Documents</button>
+          </div>
+        </div>
+        <div class="terminal"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre id="demoTerm"><span class="prompt">sysadmin@localhost:~$</span> <span class="cmd">ls</span>
+<span class="out">Desktop  Documents  Downloads  Music  Pictures  Public  Templates  Videos</span></pre></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="pwd e cd">
+      <div class="slideContent">
+        <span class="kicker">Navegação essencial</span>
+        <h2 class="sectionTitle">Para se localizar e se mover: <span class="grad">pwd</span> e <span class="grad">cd</span>.</h2>
+        <div class="grid grid2" style="margin-top:20px">
+          <div class="card"><div class="icon">📍</div><h3>pwd</h3><p><i>Print Working Directory</i>: mostra o caminho absoluto do diretório atual.</p><div class="terminal" style="margin-top:16px"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="prompt">sysadmin@localhost:~$</span> <span class="cmd">pwd</span>
+<span class="out">/home/sysadmin</span></pre></div></div>
+          <div class="card"><div class="icon">🚶</div><h3>cd</h3><p><i>Change Directory</i>: muda o diretório de trabalho dentro da estrutura hierárquica.</p><div class="terminal" style="margin-top:16px"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="prompt">sysadmin@localhost:~$</span> <span class="cmd">cd</span> Documents
+<span class="prompt">sysadmin@localhost:~/Documents$</span></pre></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Caminhos">
+      <div class="slideContent">
+        <span class="kicker">Paths</span>
+        <h2 class="sectionTitle">Caminho absoluto começa na raiz. Caminho relativo começa de onde você está.</h2>
+        <div class="pathMap"><span class="folder">/</span><span class="arrow">→</span><span class="folder">home</span><span class="arrow">→</span><span class="folder">sysadmin</span><span class="arrow">→</span><span class="folder">Documents</span><span class="arrow">→</span><span class="folder">School</span></div>
+        <div class="tabs"><button class="tab active" onclick="showTab('abs',this)">Caminho absoluto</button><button class="tab" onclick="showTab('rel',this)">Caminho relativo</button><button class="tab" onclick="showTab('short',this)">Atalhos preciosos</button></div>
+        <div id="abs" class="tabPanel active"><div class="card"><h3>/home/sysadmin/Documents</h3><p>É o endereço completo. Começa sempre na raiz <code>/</code>. Funciona independentemente do diretório atual.</p></div></div>
+        <div id="rel" class="tabPanel"><div class="card"><h3>School/Art</h3><p>É calculado a partir do diretório atual. Se você estiver em <code>Documents</code>, pode entrar em <code>School/Art</code> sem escrever o caminho inteiro.</p></div></div>
+        <div id="short" class="tabPanel"><div class="grid grid3"><div class="card"><h3>..</h3><p>Diretório pai: sobe um nível.</p></div><div class="card"><h3>~</h3><p>Diretório home do usuário.</p></div><div class="card"><h3>.</h3><p>Diretório atual.</p></div></div></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="ls -l">
+      <div class="slideContent">
+        <span class="kicker">Listagem detalhada</span>
+        <h2 class="sectionTitle">O <span class="grad">ls -l</span> mostra detalhes importantes do arquivo.</h2>
+        <div class="terminal"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="prompt">sysadmin@localhost:~$</span> <span class="cmd">ls</span> -l /var/log/auth.log
+<span id="lsline"><span style="color:#f472b6">-rw-r-----</span> <span style="color:#fde047">1</span> <span style="color:#60a5fa">syslog</span> <span style="color:#c084fc">adm</span> <span style="color:#34d399">1346</span> <span style="color:#fb923c">Oct  2 22:17</span> <span class="out">auth.log</span></span></pre></div>
+        <div class="hotline">
+          <button class="hot active" onclick="lsExplain('perm',this)">-rw-r-----</button><button class="hot" onclick="lsExplain('links',this)">1</button><button class="hot" onclick="lsExplain('user',this)">syslog</button><button class="hot" onclick="lsExplain('group',this)">adm</button><button class="hot" onclick="lsExplain('size',this)">1346</button><button class="hot" onclick="lsExplain('date',this)">Oct 2 22:17</button><button class="hot" onclick="lsExplain('name',this)">auth.log</button>
+        </div>
+        <div class="explain" id="lsExplain"><b>Tipo e permissões:</b> o primeiro caractere indica se é arquivo ou diretório; os demais indicam permissões de leitura, escrita e execução para usuário, grupo e outros.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Ordenando resultados">
+      <div class="slideContent">
+        <span class="kicker">Organização</span>
+        <h2 class="sectionTitle">Algumas opções mudam a ordem da listagem.</h2>
+        <div class="grid grid3" style="margin-top:24px">
+          <div class="card"><div class="icon">🕒</div><h3>ls -t</h3><p>Classifica por data/hora, trazendo os arquivos mais recentes primeiro.</p></div>
+          <div class="card"><div class="icon">📦</div><h3>ls -S</h3><p>Classifica por tamanho, exibindo os maiores arquivos primeiro.</p></div>
+          <div class="card"><div class="icon">🔄</div><h3>ls -r</h3><p>Inverte a ordem da classificação atual, funcionando como “reverso”.</p></div>
+        </div>
+        <div class="callout" style="margin-top:28px"><b>Exemplo:</b> <code>ls -ltr</code> combina listagem longa, ordenação por tempo e ordem reversa. Opções podem ser combinadas.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Root, su e sudo">
+      <div class="slideContent">
+        <span class="kicker">Acesso administrativo</span>
+        <h2 class="sectionTitle">Nem todo comando deve rodar com poder máximo.</h2>
+        <p class="lead">Comandos que alteram arquivos do sistema, senhas, pacotes ou configurações podem exigir privilégios de administrador.</p>
+        <div class="grid grid2" style="margin-top:22px">
+          <div class="card"><div class="icon">👑</div><h3>su</h3><p>Cria um novo shell como outro usuário, frequentemente o root. O prompt muda e você precisa sair com <code>exit</code>.</p><div class="terminal" style="margin-top:14px"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="prompt">sysadmin@localhost:~$</span> <span class="cmd">su -</span>
+<span class="out">Password:</span>
+<span class="err">root@localhost:~#</span></pre></div></div>
+          <div class="card"><div class="icon">✨</div><h3>sudo</h3><p>Executa um comando específico com privilégio administrativo, sem manter você logado como root o tempo todo.</p><div class="terminal" style="margin-top:14px"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="prompt">sysadmin@localhost:~$</span> <span class="cmd">sudo</span> comando
+<span class="out">[sudo] password for sysadmin:</span>
+<span class="prompt">sysadmin@localhost:~$</span></pre></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Prática guiada">
+      <div class="slideContent">
+        <span class="kicker">Roteiro de laboratório</span>
+        <h2 class="sectionTitle">Mini prática para fixar antes do quiz.</h2>
+        <div class="grid grid2" style="margin-top:20px">
+          <div class="card"><h3>Parte A — localização</h3><p>1. Abra o terminal.<br>2. Execute <code>pwd</code>.<br>3. Explique para um colega o que significa o caminho exibido.</p></div>
+          <div class="card"><h3>Parte B — listagem</h3><p>1. Execute <code>ls</code>.<br>2. Execute <code>ls -l</code>.<br>3. Identifique nome, dono, grupo, tamanho e data.</p></div>
+          <div class="card"><h3>Parte C — navegação</h3><p>1. Entre em <code>Documents</code> com <code>cd</code>.<br>2. Suba um nível com <code>cd ..</code>.<br>3. Volte para home com <code>cd ~</code>.</p></div>
+          <div class="card"><h3>Parte D — cuidado</h3><p>Discuta: por que não devemos usar <code>sudo</code> em qualquer comando sem entender o que ele faz?</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Quiz">
+      <div class="slideContent quizBox">
+        <span class="kicker">Desafio final</span>
+        <h2 class="sectionTitle">Quiz Linux Unhatched — Parte 1</h2>
+        <p class="lead">Responda uma pergunta por vez. No final, veja a pontuação e uma sugestão de revisão.</p>
+        <div class="card" style="margin-top:18px">
+          <div id="quizArea"></div>
+          <div class="quizNav"><button class="chip" onclick="prevQ()">← Anterior</button><button class="chip active" onclick="nextQ()" id="nextQBtn">Próxima →</button></div>
+          <div id="quizResult" style="display:none;text-align:center;padding:18px"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Fechamento">
+      <div class="slideContent split">
+        <div>
+          <span class="kicker">Resumo da aula</span>
+          <h2 class="sectionTitle">Primeiros passos dados. Agora é prática.</h2>
+          <p class="lead">Hoje você viu onde o Linux aparece, por que a CLI é importante, como comandos são formados, como navegar por caminhos e quando aparecem privilégios administrativos.</p>
+          <div class="chips" style="margin-top:22px"><span class="pill">pwd</span><span class="pill">cd</span><span class="pill">ls</span><span class="pill">ls -l</span><span class="pill">su</span><span class="pill">sudo</span></div>
+          <div class="callout" style="margin-top:24px">Para a próxima aula: pratique comandos simples e anote as mensagens de erro. Elas são pistas, não inimigas.</div>
+        </div>
+        <div class="card" style="display:grid;place-items:center;text-align:center"><div><div class="qr">🚀</div><h3 style="font-size:34px;margin:22px 0 8px">Bora praticar?</h3><p>Linux se aprende com mão no teclado.</p></div></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="nav">
+    <button id="prevBtn" onclick="prevSlide()">← Anterior</button>
+    <div class="dots" id="dots"></div>
+    <button id="nextBtn" class="primary" onclick="nextSlide()">Próximo →</button>
+  </nav>
+
+  <div class="modal" id="overview"><div class="modalBox"><div class="modalHeader"><h2>Visão geral da apresentação</h2><button class="close" onclick="closeModal('overview')">Fechar</button></div><div class="overviewGrid" id="overviewGrid"></div></div></div>
+  <div class="modal" id="sources"><div class="modalBox"><div class="modalHeader"><h2>Fontes e base do material</h2><button class="close" onclick="closeModal('sources')">Fechar</button></div><div class="callout">Conteúdo reorganizado e redesenhado a partir do material enviado pelo professor: <b>Introdução ao Mundo Linux — Módulo NDG Linux Unhatched</b>. A apresentação foi reformulada para o padrão HTML interativo utilizado nas demais disciplinas.</div><div class="grid grid2" style="margin-top:20px"><div class="card"><h3>Conteúdos mantidos</h3><p>Linux no cotidiano, GUI x CLI, sintaxe de comandos, case-sensitive, pwd, cd, caminhos, ls -l, opções de ordenação, su e sudo.</p></div><div class="card"><h3>Recursos adicionados</h3><p>Visão geral, ajuda, progresso, tela cheia, terminal interativo, abas, explicador de ls -l, prática guiada e quiz gamificado.</p></div></div></div></div>
+  <div class="modal" id="help"><div class="modalBox"><div class="modalHeader"><h2>Ajuda de navegação</h2><button class="close" onclick="closeModal('help')">Fechar</button></div><div class="grid grid3"><div class="card"><h3>Teclado</h3><p>Use ← e → para voltar e avançar. Use Esc para fechar janelas.</p></div><div class="card"><h3>Botões</h3><p>Use a barra inferior para navegar. O botão ☷ abre os slides em miniatura.</p></div><div class="card"><h3>Interações</h3><p>Clique em chips, abas e alternativas do quiz para explorar o conteúdo.</p></div></div></div></div>
+
+  <script>
+    const slides=[...document.querySelectorAll('.slide')];
+    const total=slides.length;let current=0;
+    const progress=document.getElementById('progress'), counter=document.getElementById('counter'), prevBtn=document.getElementById('prevBtn'), nextBtn=document.getElementById('nextBtn'), dots=document.getElementById('dots');
+    slides.forEach((s,i)=>{const d=document.createElement('span');d.className='sdot'+(i===0?' active':'');dots.appendChild(d)});
+    const dotEls=[...document.querySelectorAll('.sdot')];
+    const overviewGrid=document.getElementById('overviewGrid');
+    slides.forEach((s,i)=>{const t=s.dataset.title||`Slide ${i+1}`;const div=document.createElement('div');div.className='thumb';div.innerHTML=`<b>${String(i+1).padStart(2,'0')}</b>${t}`;div.onclick=()=>{goTo(i);closeModal('overview')};overviewGrid.appendChild(div)});
+    function update(){slides.forEach((s,i)=>s.classList.toggle('active',i===current));dotEls.forEach((d,i)=>d.classList.toggle('active',i===current));progress.style.width=((current+1)/total*100)+'%';counter.textContent=`${current+1} / ${total}`;prevBtn.disabled=current===0;nextBtn.textContent=current===total-1?'Fim':'Próximo →';}
+    function goTo(i){current=Math.max(0,Math.min(total-1,i));update()}function nextSlide(){if(current<total-1){current++;update()}}function prevSlide(){if(current>0){current--;update()}}
+    function openModal(id){document.getElementById(id).classList.add('active')}function closeModal(id){document.getElementById(id).classList.remove('active')}function toggleFull(){if(!document.fullscreenElement){document.documentElement.requestFullscreen()}else{document.exitFullscreen()}}
+    document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')nextSlide();if(e.key==='ArrowLeft')prevSlide();if(e.key==='Escape'){['overview','sources','help'].forEach(closeModal)}});
+    function terminalDemo(type,btn){document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));btn.classList.add('active');const samples={
+      ls:`<span class="prompt">sysadmin@localhost:~$</span> <span class="cmd">ls</span>\n<span class="out">Desktop  Documents  Downloads  Music  Pictures  Public  Templates  Videos</span>`,
+      lsDocs:`<span class="prompt">sysadmin@localhost:~$</span> <span class="cmd">ls</span> Documents\n<span class="out">School  Work  food.txt  hello.sh  linux.txt  longfile.txt</span>`,
+      lsr:`<span class="prompt">sysadmin@localhost:~$</span> <span class="cmd">ls</span> -r\n<span class="out">Videos  Templates  Public  Pictures  Music  Downloads  Documents  Desktop</span>`,
+      pwd:`<span class="prompt">sysadmin@localhost:~$</span> <span class="cmd">pwd</span>\n<span class="out">/home/sysadmin</span>`,
+      cd:`<span class="prompt">sysadmin@localhost:~$</span> <span class="cmd">cd</span> Documents\n<span class="prompt">sysadmin@localhost:~/Documents$</span>`};document.getElementById('demoTerm').innerHTML=samples[type]}
+    function showTab(id,btn){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.tabPanel').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active')}
+    function lsExplain(type,btn){document.querySelectorAll('.hot').forEach(h=>h.classList.remove('active'));btn.classList.add('active');const text={perm:'<b>Tipo e permissões:</b> o primeiro caractere indica se é arquivo ou diretório; os demais indicam leitura, escrita e execução.',links:'<b>Links físicos:</b> quantidade de referências diretas para aquele mesmo arquivo.',user:'<b>Dono usuário:</b> conta de usuário proprietária do arquivo.',group:'<b>Dono grupo:</b> grupo associado ao arquivo.',size:'<b>Tamanho:</b> tamanho do arquivo em bytes.',date:'<b>Data de modificação:</b> última data/hora registrada para alteração do arquivo.',name:'<b>Nome:</b> nome do arquivo exibido na listagem.'};document.getElementById('lsExplain').innerHTML=text[type]}
+    const questions=[
+      ['Qual é o formato mais comum da sintaxe de um comando Linux?',['argumentos [opções] comando','comando [opções] [argumentos]','opções comando argumentos'],1],
+      ['Qual comando mostra o diretório atual?',['pwd','cd','ls -r'],0],
+      ['O que o comando cd faz?',['Lista arquivos','Muda de diretório','Mostra permissões'],1],
+      ['Qual símbolo representa o diretório pai?',['~','..','.'],1],
+      ['Um caminho absoluto sempre começa com:',['/','~','Documents'],0],
+      ['Em Linux, LS e ls são iguais?',['Sim','Não, Linux é case-sensitive','Apenas no modo gráfico'],1],
+      ['O que ls -l mostra?',['Somente arquivos ocultos','Listagem detalhada','Desliga o terminal'],1],
+      ['Qual opção classifica por tamanho?',['-S','-t','-r'],0],
+      ['Qual é uma vantagem da CLI?',['Não precisa digitar nada','Permite automação e troubleshooting','Funciona apenas em jogos'],1],
+      ['Qual comando executa uma ação específica como administrador?',['sudo','pwd','ls'],0]
+    ];
+    let qIndex=0, answers=Array(questions.length).fill(null);
+    function renderQ(){const q=questions[qIndex];const done=answers[qIndex];let html=`<div class="mini" style="font-weight:900;color:#a5f3fc">Pergunta ${qIndex+1} de ${questions.length}</div><h3 style="font-size:28px;margin:12px 0 16px">${q[0]}</h3>`;q[1].forEach((op,i)=>{let cls='option';if(done!==null){if(i===q[2])cls+=' correct';else if(i===done)cls+=' wrong'}html+=`<label class="${cls}" onclick="choose(${i})">${String.fromCharCode(65+i)}. ${op}</label>`});document.getElementById('quizArea').innerHTML=html;document.getElementById('nextQBtn').textContent=qIndex===questions.length-1?'Ver resultado':'Próxima →';document.getElementById('quizResult').style.display='none'}
+    function choose(i){answers[qIndex]=i;renderQ()}function nextQ(){if(qIndex<questions.length-1){qIndex++;renderQ()}else{showResult()}}function prevQ(){if(qIndex>0){qIndex--;renderQ()}}
+    function showResult(){let score=answers.reduce((a,v,i)=>a+(v===questions[i][2]?1:0),0);let msg=score>=9?'Excelente! Você dominou os fundamentos.':score>=6?'Bom trabalho! Revise os pontos marcados e pratique mais um pouco.':'Continue praticando. O terminal fica mais fácil com repetição.';document.getElementById('quizResult').style.display='block';document.getElementById('quizResult').innerHTML=`<div class="resultBadge grad">${score}/${questions.length}</div><p class="lead" style="margin:10px auto">${msg}</p><button class="chip active" onclick="answers=Array(questions.length).fill(null);qIndex=0;renderQ()">Refazer quiz</button>`}
+    renderQ();update();
+  </script>
+</body>
+</html>

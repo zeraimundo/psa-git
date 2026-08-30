@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prática de Sistemas Abertos — Linux Unhatched | Parte 2</title>
+  <style>
+    :root{--bg:#070b1f;--bg2:#0e1638;--panel:#111a3fee;--panel2:#172153ee;--cyan:#22d3ee;--blue:#3b82f6;--violet:#8b5cf6;--pink:#ec4899;--green:#34d399;--yellow:#fbbf24;--red:#fb7185;--text:#f8fafc;--muted:#cbd5e1;--soft:#94a3b8;--line:#334155;--code:#0b1228;--shadow:0 24px 60px rgba(0,0,0,.36);--radius:26px}*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}body:before{content:"";position:fixed;inset:0;background:radial-gradient(circle at 10% 20%,rgba(34,211,238,.22),transparent 31%),radial-gradient(circle at 78% 10%,rgba(139,92,246,.24),transparent 30%),radial-gradient(circle at 68% 86%,rgba(59,130,246,.18),transparent 35%),linear-gradient(135deg,#070b1f,#0b102b 55%,#090a20);z-index:-3}.particles{position:fixed;inset:0;z-index:-2;opacity:.55;background-image:radial-gradient(circle,rgba(255,255,255,.35) 1px,transparent 1px);background-size:44px 44px;animation:drift 24s linear infinite}@keyframes drift{from{transform:translate3d(0,0,0)}to{transform:translate3d(-44px,-44px,0)}}.aurora{position:fixed;width:52vw;height:52vw;right:-20vw;bottom:-26vw;background:conic-gradient(from 180deg,rgba(34,211,238,.25),rgba(139,92,246,.08),rgba(236,72,153,.17),rgba(34,211,238,.25));filter:blur(70px);border-radius:50%;z-index:-2;animation:pulse 10s ease-in-out infinite alternate}@keyframes pulse{to{transform:translate(-10vw,-8vw) scale(1.16)}}.topbar{position:fixed;top:0;left:0;right:0;height:62px;display:flex;align-items:center;gap:16px;padding:10px 22px;background:rgba(5,10,31,.78);backdrop-filter:blur(18px);border-bottom:1px solid rgba(148,163,184,.18);z-index:10}.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.2px;white-space:nowrap}.brand .logo{width:40px;height:40px;border-radius:15px;background:linear-gradient(135deg,var(--cyan),var(--violet));display:grid;place-items:center;box-shadow:0 0 28px rgba(34,211,238,.35)}.brand small{display:block;color:var(--soft);font-weight:800}.progressWrap{flex:1;height:10px;border-radius:999px;background:rgba(148,163,184,.18);overflow:hidden}.progress{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--blue),var(--violet));box-shadow:0 0 22px rgba(34,211,238,.5);transition:width .35s ease}.counter{color:var(--muted);font-size:14px;font-weight:800;min-width:94px;text-align:center}.topbtn{border:1px solid rgba(148,163,184,.2);background:rgba(15,23,42,.68);color:var(--text);border-radius:999px;padding:9px 12px;font-weight:800;cursor:pointer;transition:.2s}.topbtn:hover{border-color:var(--cyan);transform:translateY(-1px);box-shadow:0 0 0 4px rgba(34,211,238,.10)}#deck{height:100vh;width:100vw;position:relative}.slide{position:absolute;inset:62px 0 72px 0;padding:42px 62px;display:none;opacity:0;transform:translateY(18px) scale(.985);transition:.35s ease;overflow:hidden}.slide.active{display:block;opacity:1;transform:translateY(0) scale(1);animation:enter .42s ease both}@keyframes enter{from{filter:blur(8px);opacity:0}to{filter:blur(0);opacity:1}}.slideContent{height:100%;max-width:1280px;margin:0 auto;display:flex;flex-direction:column}.kicker{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;padding:8px 13px;border-radius:999px;background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.30);color:#a5f3fc;font-weight:900;font-size:14px;text-transform:uppercase;letter-spacing:.08em}.title{font-size:clamp(38px,5vw,76px);line-height:.98;margin:18px 0 16px;font-weight:950;letter-spacing:-.045em}.title .grad,.grad{background:linear-gradient(90deg,#fff,var(--cyan),#c4b5fd);-webkit-background-clip:text;background-clip:text;color:transparent}.subtitle{font-size:clamp(21px,2.25vw,31px);color:var(--muted);line-height:1.45;max-width:960px}.sectionTitle{font-size:clamp(31px,3.5vw,54px);line-height:1.04;margin:0 0 18px;font-weight:950;letter-spacing:-.035em}.lead{font-size:clamp(19px,1.55vw,24px);line-height:1.48;color:var(--muted);max-width:1020px}.row{display:flex;gap:26px;align-items:stretch}.col{flex:1}.grid{display:grid;gap:22px}.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid4{grid-template-columns:repeat(4,minmax(0,1fr))}.split{display:grid;grid-template-columns:1.05fr .95fr;gap:26px;align-items:center}.card{background:linear-gradient(180deg,rgba(15,23,42,.82),rgba(17,24,61,.86));border:1px solid rgba(148,163,184,.19);box-shadow:var(--shadow);border-radius:var(--radius);padding:24px;position:relative;overflow:hidden}.card:after{content:"";position:absolute;inset:auto -30% -55% -30%;height:80%;background:radial-gradient(circle,rgba(34,211,238,.10),transparent 58%);pointer-events:none}.card h3{margin:0 0 10px;font-size:25px}.card p,.card li{color:var(--muted);font-size:18px;line-height:1.45}.card ul{margin:8px 0 0;padding-left:20px}.mini{font-size:15px;color:var(--soft);line-height:1.45}.icon{font-size:38px;width:62px;height:62px;border-radius:20px;display:grid;place-items:center;background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.24);margin-bottom:15px}.bigIcon{font-size:110px;filter:drop-shadow(0 18px 30px rgba(0,0,0,.36))}.pill{display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border-radius:999px;background:rgba(15,23,42,.75);border:1px solid rgba(148,163,184,.22);font-weight:900;color:#dbeafe}.chips{display:flex;gap:10px;flex-wrap:wrap}.callout{border-left:5px solid var(--cyan);background:linear-gradient(90deg,rgba(34,211,238,.12),rgba(139,92,246,.08));padding:20px 24px;border-radius:20px;color:var(--muted);font-size:20px;line-height:1.45}.danger{border-left-color:var(--red);background:linear-gradient(90deg,rgba(251,113,133,.15),rgba(139,92,246,.08))}.warnBox{border-left-color:var(--yellow);background:linear-gradient(90deg,rgba(251,191,36,.15),rgba(139,92,246,.08))}.commandBox{font-family:Consolas,monospace;font-size:clamp(26px,3.1vw,42px);text-align:center;padding:26px;border-radius:24px;background:#0b1228;border:1px solid rgba(34,211,238,.25);box-shadow:inset 0 0 40px rgba(34,211,238,.08);margin:16px 0}.terminal{background:linear-gradient(180deg,#0b1020,#050816);border:1px solid rgba(148,163,184,.22);border-radius:22px;box-shadow:0 22px 45px rgba(0,0,0,.35);overflow:hidden;font-family:"Fira Code",Consolas,Monaco,monospace}.terminal .bar{height:42px;background:#111827;display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:1px solid rgba(148,163,184,.15)}.dot{width:12px;height:12px;border-radius:999px;background:#fb7185}.dot:nth-child(2){background:#fbbf24}.dot:nth-child(3){background:#34d399}.terminal pre{margin:0;padding:20px;font-size:18px;line-height:1.55;white-space:pre-wrap;color:#e5e7eb}.prompt{color:#34d399}.cmd{color:#60a5fa}.out{color:#cbd5e1}.err{color:#fb7185}.warn{color:#fbbf24}.hl{color:#22d3ee;font-weight:900}.permLine{font-family:Consolas,monospace;font-size:32px;letter-spacing:2px;text-align:center;margin:22px 0}.permChar{padding:8px 10px;border-radius:12px;background:rgba(15,23,42,.8);border:1px solid rgba(148,163,184,.25);cursor:pointer;transition:.2s}.permChar:hover,.permChar.active{background:rgba(34,211,238,.22);border-color:var(--cyan);color:#a5f3fc;transform:translateY(-2px)}.explain{min-height:96px;margin-top:14px;padding:18px;border-radius:18px;background:rgba(34,211,238,.09);border:1px solid rgba(34,211,238,.22);color:var(--muted);font-size:19px;line-height:1.45}.tabs{display:flex;gap:10px;margin:20px 0 18px;flex-wrap:wrap}.tab{padding:11px 16px;border-radius:999px;border:1px solid rgba(148,163,184,.22);background:rgba(15,23,42,.72);color:var(--muted);font-weight:900;cursor:pointer}.tab.active{color:#fff;background:linear-gradient(90deg,var(--cyan),var(--violet));border-color:transparent}.tabPanel{display:none}.tabPanel.active{display:block}.table{width:100%;border-collapse:separate;border-spacing:0 10px}.table td,.table th{padding:15px 16px;background:rgba(15,23,42,.75);border-top:1px solid rgba(148,163,184,.18);border-bottom:1px solid rgba(148,163,184,.18);font-size:18px;color:var(--muted)}.table th{color:#a5f3fc;font-size:16px;text-transform:uppercase;letter-spacing:.05em}.table td:first-child,.table th:first-child{border-left:1px solid rgba(148,163,184,.18);border-radius:16px 0 0 16px;color:#fff;font-weight:900}.table td:last-child,.table th:last-child{border-right:1px solid rgba(148,163,184,.18);border-radius:0 16px 16px 0}.syntax{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.syntax .part{background:rgba(15,23,42,.78);border:1px solid rgba(148,163,184,.22);border-radius:22px;padding:20px}.part b{display:block;font-size:30px;color:#fff}.part span{color:var(--muted);font-size:17px}.flow{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:22px}.flow .node{padding:16px 18px;border-radius:20px;background:rgba(15,23,42,.78);border:1px solid rgba(148,163,184,.22);font-family:Consolas,monospace;font-weight:900}.flow .arrow{font-size:28px;color:var(--cyan)}.activity{counter-reset:item}.activity li{list-style:none;counter-increment:item;margin:12px 0;padding:16px 18px 16px 60px;position:relative;border-radius:20px;background:rgba(15,23,42,.78);border:1px solid rgba(148,163,184,.22);color:var(--muted);font-size:19px}.activity li:before{content:counter(item);position:absolute;left:16px;top:13px;width:32px;height:32px;border-radius:12px;background:linear-gradient(135deg,var(--cyan),var(--violet));display:grid;place-items:center;color:white;font-weight:950}.nav{position:fixed;left:0;right:0;bottom:0;height:72px;background:rgba(5,10,31,.82);backdrop-filter:blur(18px);border-top:1px solid rgba(148,163,184,.18);display:flex;align-items:center;justify-content:center;gap:18px;z-index:10}.nav button{border:0;border-radius:999px;padding:13px 20px;background:rgba(15,23,42,.9);color:var(--text);font-weight:950;cursor:pointer;border:1px solid rgba(148,163,184,.2)}.nav button:hover{border-color:var(--cyan);box-shadow:0 0 0 4px rgba(34,211,238,.10)}.nav button.primary{background:linear-gradient(90deg,var(--blue),var(--violet));border:0}.nav button:disabled{opacity:.35;cursor:not-allowed}.dots{display:flex;gap:7px;align-items:center;max-width:340px;overflow:hidden}.sdot{width:9px;height:9px;border-radius:999px;background:rgba(148,163,184,.35);transition:.2s}.sdot.active{width:30px;background:var(--cyan)}.modal{position:fixed;inset:0;background:rgba(2,6,23,.84);backdrop-filter:blur(18px);display:none;z-index:30;padding:74px 42px}.modal.active{display:block}.modalBox{max-width:1120px;margin:0 auto;background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(17,24,61,.98));border:1px solid rgba(148,163,184,.22);border-radius:32px;padding:28px;box-shadow:var(--shadow);max-height:calc(100vh - 140px);overflow:auto}.modalHeader{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.close{border:1px solid rgba(148,163,184,.24);background:rgba(15,23,42,.9);color:#fff;border-radius:999px;padding:10px 14px;font-weight:900;cursor:pointer}.overviewGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.thumb{min-height:118px;border-radius:22px;background:rgba(15,23,42,.84);border:1px solid rgba(148,163,184,.22);padding:16px;cursor:pointer}.thumb:hover{border-color:var(--cyan);transform:translateY(-2px)}.thumb b{display:block;margin-bottom:8px;color:#a5f3fc}.quizBox{max-width:1040px;margin:0 auto}.question{display:none}.question.active{display:block}.option{display:block;margin:12px 0;padding:15px 18px;border-radius:18px;background:rgba(15,23,42,.76);border:1px solid rgba(148,163,184,.22);cursor:pointer;font-size:19px;color:var(--text)}.option:hover{border-color:var(--cyan)}.option.correct{background:rgba(52,211,153,.16);border-color:var(--green)}.option.wrong{background:rgba(251,113,133,.14);border-color:var(--red)}.quizNav{display:flex;justify-content:space-between;gap:12px;margin-top:18px}.resultBadge{font-size:42px;font-weight:950}@media(max-width:900px){.slide{padding:26px 18px;inset:62px 0 72px 0;overflow:auto}.grid2,.grid3,.grid4,.split,.syntax{grid-template-columns:1fr}.row{flex-direction:column}.overviewGrid{grid-template-columns:1fr}.topbar{gap:8px;padding:8px 10px}.topbtn span{display:none}.counter{min-width:58px}.nav{gap:8px}.nav button{padding:11px 13px}.dots{display:none}.terminal pre{font-size:15px}.title{font-size:43px}.sectionTitle{font-size:34px}.permLine{font-size:23px}.table td,.table th{font-size:15px}}
+  </style>
+</head>
+<body>
+  <div class="particles"></div><div class="aurora"></div>
+  <header class="topbar">
+    <div class="brand"><div class="logo">🔐</div><div><div>Prática de Sistemas Abertos</div><small>Linux Unhatched · Parte 2</small></div></div>
+    <div class="progressWrap"><div class="progress" id="progress"></div></div>
+    <div class="counter" id="counter">1 / 12</div>
+    <button class="topbtn" onclick="openModal('overview')">☷ <span>Visão geral</span></button>
+    <button class="topbtn" onclick="openModal('sources')">☑ <span>Fontes</span></button>
+    <button class="topbtn" onclick="openModal('help')">? <span>Ajuda</span></button>
+    <button class="topbtn" onclick="toggleFull()">⛶</button>
+  </header>
+  <main id="deck">
+    <section class="slide active" data-title="Abertura">
+      <div class="slideContent split">
+        <div>
+          <span class="kicker">Aula 02 · Segurança básica no terminal</span>
+          <h1 class="title">Permissões e <span class="grad">arquivos</span> no Linux</h1>
+          <p class="subtitle">Entenda quem pode ler, alterar, executar, copiar, mover e apagar arquivos em um sistema Linux.</p>
+          <div class="chips" style="margin-top:28px"><span class="pill">🔐 rwx</span><span class="pill">🛠 chmod</span><span class="pill">👤 chown</span><span class="pill">📄 cat/head/tail</span><span class="pill">⚠ rm com cuidado</span></div>
+        </div>
+        <div class="card" style="text-align:center">
+          <div class="bigIcon">🗂️</div>
+          <h3>Missão da aula</h3>
+          <p>Sair do “não tenho permissão” para saber diagnosticar o problema, escolher o comando correto e evitar apagões acidentais.</p>
+          <div class="terminal" style="margin-top:20px;text-align:left"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="prompt">aluno@linux:~$</span> <span class="cmd">ls -l</span>
+<span class="out">-rwxr--r-- 1 aluno turma 647 hello.sh</span></pre></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Roteiro">
+      <div class="slideContent">
+        <span class="kicker">Mapa da aula</span>
+        <h2 class="sectionTitle">O que vamos dominar hoje?</h2>
+        <p class="lead">A aula avança do diagnóstico para a ação: primeiro lemos as permissões, depois alteramos acesso, propriedade e manipulamos arquivos com segurança.</p>
+        <div class="grid grid4" style="margin-top:28px">
+          <div class="card"><div class="icon">🔎</div><h3>1. Ler</h3><p>Interpretar a saída do <code>ls -l</code>: tipo, dono, grupo, permissões, tamanho e data.</p></div>
+          <div class="card"><div class="icon">🔐</div><h3>2. Permitir</h3><p>Entender <code>r</code>, <code>w</code> e <code>x</code> para arquivos e diretórios.</p></div>
+          <div class="card"><div class="icon">🛠️</div><h3>3. Alterar</h3><p>Usar <code>chmod</code> e <code>chown</code> com consciência.</p></div>
+          <div class="card"><div class="icon">📦</div><h3>4. Manipular</h3><p>Visualizar, copiar, mover, renomear e remover arquivos pela CLI.</p></div>
+        </div>
+        <div class="callout" style="margin-top:26px">Pergunta-guia para a turma: <b>“Quem sou eu no arquivo: dono, grupo ou outro?”</b> A resposta define quais permissões valem para você.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Lendo ls -l">
+      <div class="slideContent">
+        <span class="kicker">Diagnóstico visual</span>
+        <h2 class="sectionTitle">Como ler as permissões no <span class="grad">ls -l</span></h2>
+        <p class="lead">Clique nos blocos da linha de permissão para explicar cada parte.</p>
+        <div class="terminal"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="prompt">sysadmin@localhost:~/Documents$</span> <span class="cmd">ls -l hello.sh</span>
+<span class="hl">-</span><span style="color:#34d399;font-weight:bold">rw-</span><span style="color:#fbbf24;font-weight:bold">r--</span><span style="color:#c084fc;font-weight:bold">r--</span> 1 <span class="cmd">sysadmin</span> <span class="warn">sysadmin</span> 647 Dec 20 2017 hello.sh</pre></div>
+        <div class="permLine" id="permLine">
+          <span class="permChar active" data-info="O primeiro caractere indica o tipo: '-' é arquivo comum; 'd' é diretório; 'l' é link simbólico.">-</span>
+          <span class="permChar" data-info="Primeiro trio: permissões do dono/proprietário do arquivo. Aqui, rw- significa que o dono lê e escreve, mas não executa.">rw-</span>
+          <span class="permChar" data-info="Segundo trio: permissões do grupo associado ao arquivo. Aqui, r-- significa apenas leitura.">r--</span>
+          <span class="permChar" data-info="Terceiro trio: permissões de outros usuários, ou seja, quem não é dono nem pertence ao grupo do arquivo.">r--</span>
+          <span class="permChar" data-info="Depois das permissões aparecem dono, grupo, tamanho, data/hora e nome do arquivo.">dados</span>
+        </div>
+        <div class="explain" id="permExplain">O primeiro caractere indica o tipo: '-' é arquivo comum; 'd' é diretório; 'l' é link simbólico.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="r w x">
+      <div class="slideContent">
+        <span class="kicker">A tabela que evita confusão</span>
+        <h2 class="sectionTitle">Permissões <span class="grad">r, w, x</span>: arquivo não é diretório</h2>
+        <p class="lead">A mesma letra tem efeito diferente dependendo do alvo. Use as abas para comparar.</p>
+        <div class="tabs"><button class="tab active" onclick="showTab('rwx','arquivo',this)">📄 Em arquivos</button><button class="tab" onclick="showTab('rwx','diretorio',this)">📁 Em diretórios</button><button class="tab" onclick="showTab('rwx','memoria',this)">🧠 Macete</button></div>
+        <div id="rwx-arquivo" class="tabPanel active"><table class="table"><tr><th>Permissão</th><th>Significado</th><th>Exemplo</th></tr><tr><td>r · read</td><td>Ler ou copiar o conteúdo do arquivo.</td><td><code>cat arquivo.txt</code></td></tr><tr><td>w · write</td><td>Modificar ou substituir o conteúdo.</td><td>Editar um texto ou sobrescrever dados.</td></tr><tr><td>x · execute</td><td>Executar como programa ou script.</td><td><code>./hello.sh</code></td></tr></table></div>
+        <div id="rwx-diretorio" class="tabPanel"><table class="table"><tr><th>Permissão</th><th>Significado</th><th>Exemplo</th></tr><tr><td>r · read</td><td>Listar nomes dentro do diretório.</td><td><code>ls Pasta</code></td></tr><tr><td>w · write</td><td>Criar, apagar ou renomear entradas no diretório.</td><td><code>mv</code>, <code>rm</code>, <code>touch</code></td></tr><tr><td>x · execute</td><td>Entrar/travessar o diretório.</td><td><code>cd Pasta</code></td></tr></table></div>
+        <div id="rwx-memoria" class="tabPanel"><div class="grid grid3"><div class="card"><h3>r = olhar</h3><p>Você enxerga ou lê o conteúdo.</p></div><div class="card"><h3>w = mudar</h3><p>Você altera o conteúdo ou a lista de nomes de uma pasta.</p></div><div class="card"><h3>x = entrar/rodar</h3><p>Em arquivo, executa. Em diretório, permite atravessar.</p></div></div></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="chmod">
+      <div class="slideContent">
+        <span class="kicker">Alterando acesso</span>
+        <h2 class="sectionTitle">O comando <span class="grad">chmod</span> no modo simbólico</h2>
+        <p class="lead"><code>chmod</code> muda o modo de acesso. A lógica é montar uma frase curta: <b>para quem?</b> <b>o que fazer?</b> <b>qual permissão?</b></p>
+        <div class="commandBox">chmod [conjunto][ação][permissão] arquivo</div>
+        <div class="syntax">
+          <div class="part"><b>u</b><span>usuário/dono</span></div><div class="part"><b>g</b><span>grupo</span></div><div class="part"><b>o</b><span>outros</span></div><div class="part"><b>a</b><span>todos</span></div>
+          <div class="part"><b>+</b><span>adicionar</span></div><div class="part"><b>-</b><span>remover</span></div><div class="part"><b>=</b><span>definir exatamente</span></div><div class="part"><b>rwx</b><span>ler, escrever, executar</span></div>
+        </div>
+        <div class="terminal" style="margin-top:22px"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="prompt">$</span> <span class="cmd">chmod u+x hello.sh</span>     <span class="out"># dono ganha execução</span>
+<span class="prompt">$</span> <span class="cmd">chmod go-r segredo.txt</span> <span class="out"># grupo e outros perdem leitura</span>
+<span class="prompt">$</span> <span class="cmd">chmod a=rw relatorio.txt</span> <span class="out"># todos ficam com leitura e escrita, sem execução</span></pre></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Laboratório chmod">
+      <div class="slideContent split">
+        <div>
+          <span class="kicker">Prática guiada</span>
+          <h2 class="sectionTitle">Transformando um texto em script executável</h2>
+          <p class="lead">O erro “Permission denied” pode significar que o arquivo existe, mas não tem permissão de execução para você.</p>
+          <div class="callout">Ponto didático: <b>não basta o arquivo terminar em .sh</b>. O sistema olha as permissões.</div>
+        </div>
+        <div class="terminal"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="prompt">$</span> <span class="cmd">./hello.sh</span>
+<span class="err">bash: ./hello.sh: Permission denied</span>
+
+<span class="prompt">$</span> <span class="cmd">ls -l hello.sh</span>
+<span class="out">-rw-r--r-- 1 sysadmin sysadmin hello.sh</span>
+
+<span class="prompt">$</span> <span class="cmd">chmod u+x hello.sh</span>
+<span class="prompt">$</span> <span class="cmd">./hello.sh</span>
+<span class="warn">______________
+( Hello World! )
+--------------</span></pre></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="chown">
+      <div class="slideContent">
+        <span class="kicker">Dono e grupo</span>
+        <h2 class="sectionTitle">Mudando propriedade com <span class="grad">chown</span></h2>
+        <p class="lead">O dono de um arquivo normalmente é quem o cria. Para trocar a propriedade, em geral é necessário acesso administrativo.</p>
+        <div class="grid grid2" style="margin-top:20px">
+          <div class="card"><div class="icon">👤</div><h3>Dono</h3><p>Usuário proprietário do arquivo. É o primeiro grupo de permissões depois do tipo.</p><div class="commandBox" style="font-size:28px">sudo chown root hello.sh</div></div>
+          <div class="card"><div class="icon">👥</div><h3>Grupo</h3><p>Conjunto de usuários que compartilham permissões sobre o arquivo.</p><div class="commandBox" style="font-size:28px">sudo chown root:adm log.txt</div></div>
+        </div>
+        <div class="callout warnBox" style="margin-top:22px">Atenção: ao transferir o arquivo para <code>root</code>, o usuário anterior pode perder privilégios e passar a ser tratado como grupo ou outros.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Visualizar arquivos">
+      <div class="slideContent">
+        <span class="kicker">Leitura no terminal</span>
+        <h2 class="sectionTitle">Visualizando arquivos: <span class="grad">cat, head e tail</span></h2>
+        <p class="lead">Escolha a ferramenta pelo tamanho do arquivo e pela informação que deseja encontrar.</p>
+        <div class="tabs"><button class="tab active" onclick="showTab('view','cat',this)">cat</button><button class="tab" onclick="showTab('view','head',this)">head</button><button class="tab" onclick="showTab('view','tail',this)">tail</button></div>
+        <div id="view-cat" class="tabPanel active"><div class="grid grid2"><div class="card"><h3>cat</h3><p>Mostra tudo de uma vez. Bom para arquivos pequenos.</p></div><div class="terminal"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="prompt">$</span> <span class="cmd">cat animals.txt</span>
+<span class="out">1 retriever
+2 badger
+3 bat</span></pre></div></div></div>
+        <div id="view-head" class="tabPanel"><div class="grid grid2"><div class="card"><h3>head</h3><p>Mostra o início. Por padrão, 10 linhas. Use <code>-n</code> para escolher.</p></div><div class="terminal"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="prompt">$</span> <span class="cmd">head -n 2 alpha.txt</span>
+<span class="out">A is for Apple
+B is for Bear</span></pre></div></div></div>
+        <div id="view-tail" class="tabPanel"><div class="grid grid2"><div class="card"><h3>tail</h3><p>Mostra o fim. Muito usado para verificar logs recentes.</p></div><div class="terminal"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="prompt">$</span> <span class="cmd">tail -n 2 alpha.txt</span>
+<span class="out">Y is for Yellow
+Z is for Zebra</span></pre></div></div></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Copiar">
+      <div class="slideContent">
+        <span class="kicker">Criando cópias</span>
+        <h2 class="sectionTitle">Copiar com <span class="grad">cp</span> e criar dados com <span class="grad">dd</span></h2>
+        <div class="grid grid2" style="margin-top:18px">
+          <div class="card"><div class="icon">📋</div><h3>cp</h3><p>Copia de uma origem para um destino. Você precisa conseguir ler a origem e escrever no destino.</p><div class="terminal" style="margin-top:16px"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="prompt">$</span> <span class="cmd">cp /etc/passwd .</span>
+<span class="out"># copia para o diretório atual</span></pre></div></div>
+          <div class="card"><div class="icon">💽</div><h3>dd</h3><p>Copia dados em baixo nível. Pode criar arquivos de teste, imagens e cópias brutas.</p><div class="terminal" style="margin-top:16px"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="prompt">$</span> <span class="cmd">dd if=/dev/zero of=/tmp/swapex bs=1M count=50</span></pre></div></div>
+        </div>
+        <div class="flow"><div class="node">if= origem</div><div class="arrow">→</div><div class="node">bs= tamanho do bloco</div><div class="arrow">→</div><div class="node">count= quantidade</div><div class="arrow">→</div><div class="node">of= destino</div></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Mover e remover">
+      <div class="slideContent">
+        <span class="kicker">Operações que mudam o sistema</span>
+        <h2 class="sectionTitle"><span class="grad">mv</span> move ou renomeia; <span class="grad">rm</span> apaga de verdade</h2>
+        <div class="grid grid2" style="margin-top:18px">
+          <div class="card"><div class="icon">🚚</div><h3>mv</h3><p>O comportamento depende do destino: se for outra pasta, move; se for outro nome na mesma pasta, renomeia.</p><div class="terminal" style="margin-top:16px"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="prompt">$</span> <span class="cmd">mv people.csv Work</span>       <span class="out"># mover</span>
+<span class="prompt">$</span> <span class="cmd">mv animals.txt zoo.txt</span>  <span class="out"># renomear</span></pre></div></div>
+          <div class="card"><div class="icon">🗑️</div><h3>rm</h3><p>No terminal Linux não há lixeira por padrão. Remover pode ser permanente.</p><div class="terminal" style="margin-top:16px"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="prompt">$</span> <span class="cmd">rm linux.txt</span>
+<span class="prompt">$</span> <span class="cmd">rm Work</span>
+<span class="err">rm: cannot remove 'Work': Is a directory</span>
+<span class="prompt">$</span> <span class="cmd">rm -r Work</span></pre></div></div>
+        </div>
+        <div class="callout danger" style="margin-top:24px">Regra de ouro: antes de usar <code>rm -r</code>, confirme o caminho com <code>pwd</code> e liste o alvo com <code>ls</code>.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Atividade">
+      <div class="slideContent">
+        <span class="kicker">Mão na massa</span>
+        <h2 class="sectionTitle">Desafio rápido: organize e proteja seus arquivos</h2>
+        <p class="lead">Em duplas, executem o roteiro e expliquem o motivo de cada comando.</p>
+        <ol class="activity">
+          <li>Crie uma pasta chamada <code>aula_permissoes</code> e entre nela.</li>
+          <li>Crie um arquivo <code>recado.txt</code>, leia com <code>cat</code> e copie para <code>backup.txt</code>.</li>
+          <li>Crie um script <code>hello.sh</code>, tente executar, corrija com <code>chmod u+x</code> e execute novamente.</li>
+          <li>Use <code>ls -l</code> e explique quem é dono, grupo e outros.</li>
+          <li>Renomeie <code>backup.txt</code> para <code>copia_recado.txt</code> com <code>mv</code>.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Quiz">
+      <div class="slideContent quizBox">
+        <span class="kicker">Quiz final</span>
+        <h2 class="sectionTitle">Teste seus conhecimentos</h2>
+        <p class="lead">Responda e receba feedback imediato. Use as setas do quiz para navegar entre as perguntas.</p>
+        <div id="quiz"></div>
+        <div id="quizResult" class="card" style="display:none;margin-top:18px;text-align:center"></div>
+      </div>
+    </section>
+  </main>
+  <footer class="nav"><button id="prevBtn" onclick="prevSlide()">← Anterior</button><div class="dots" id="dots"></div><button class="primary" id="nextBtn" onclick="nextSlide()">Próximo →</button></footer>
+
+  <div id="overview" class="modal"><div class="modalBox"><div class="modalHeader"><h2>Visão geral da apresentação</h2><button class="close" onclick="closeModal('overview')">Fechar</button></div><div class="overviewGrid" id="overviewGrid"></div></div></div>
+  <div id="sources" class="modal"><div class="modalBox"><div class="modalHeader"><h2>Fontes e referência de conteúdo</h2><button class="close" onclick="closeModal('sources')">Fechar</button></div><div class="card"><h3>Material-base</h3><p>Conteúdo adaptado do slide enviado pelo professor: <b>Linux: Permissões e Gerenciamento de Arquivos</b>, módulo NDG Linux Unhatched, com reorganização didática, atividades e quiz.</p><p class="mini">Sugestão: usar estes slides como apoio visual e manter a prática no terminal como momento central da aula.</p></div></div></div>
+  <div id="help" class="modal"><div class="modalBox"><div class="modalHeader"><h2>Ajuda</h2><button class="close" onclick="closeModal('help')">Fechar</button></div><div class="grid grid2"><div class="card"><h3>Navegação</h3><p>Use ← e → no teclado, os botões inferiores ou a visão geral.</p></div><div class="card"><h3>Interações</h3><p>Clique nos blocos de permissão, nas abas e nas opções do quiz.</p></div></div></div></div>
+
+  <script>
+    const slides=[...document.querySelectorAll('.slide')];let current=0;const progress=document.getElementById('progress'),counter=document.getElementById('counter'),dots=document.getElementById('dots'),prevBtn=document.getElementById('prevBtn'),nextBtn=document.getElementById('nextBtn'),overviewGrid=document.getElementById('overviewGrid');
+    slides.forEach((s,i)=>{const d=document.createElement('button');d.className='sdot';d.onclick=()=>goTo(i);dots.appendChild(d);const t=document.createElement('div');t.className='thumb';t.onclick=()=>{closeModal('overview');goTo(i)};t.innerHTML=`<b>${String(i+1).padStart(2,'0')}</b>${s.dataset.title}`;overviewGrid.appendChild(t)});
+    function update(){slides.forEach((s,i)=>s.classList.toggle('active',i===current));[...dots.children].forEach((d,i)=>d.classList.toggle('active',i===current));counter.textContent=`${current+1} / ${slides.length}`;progress.style.width=`${((current+1)/slides.length)*100}%`;prevBtn.disabled=current===0;nextBtn.disabled=current===slides.length-1}
+    function nextSlide(){if(current<slides.length-1){current++;update()}}function prevSlide(){if(current>0){current--;update()}}function goTo(i){current=i;update()}function openModal(id){document.getElementById(id).classList.add('active')}function closeModal(id){document.getElementById(id).classList.remove('active')}function toggleFull(){if(!document.fullscreenElement){document.documentElement.requestFullscreen?.()}else{document.exitFullscreen?.()}}
+    document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')nextSlide();if(e.key==='ArrowLeft')prevSlide();if(e.key==='Escape')[...document.querySelectorAll('.modal')].forEach(m=>m.classList.remove('active'))});
+    document.querySelectorAll('.permChar').forEach(el=>el.addEventListener('click',()=>{document.querySelectorAll('.permChar').forEach(x=>x.classList.remove('active'));el.classList.add('active');document.getElementById('permExplain').textContent=el.dataset.info}));
+    function showTab(group,id,btn){document.querySelectorAll(`[id^="${group}-"]`).forEach(p=>p.classList.remove('active'));document.getElementById(`${group}-${id}`).classList.add('active');btn.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active')}
+    const qs=[
+      ['Na saída -rwxr--r--, o trio rwx pertence a quem?',['Grupo','Dono/proprietário','Outros'],1],
+      ['Qual comando adiciona execução para o dono de script.sh?',['chmod u+x script.sh','chown u+x script.sh','chmod +exe script.sh'],0],
+      ['Qual comando mostra as últimas linhas de um arquivo?',['head','tail','cat'],1],
+      ['mv foto.jpg imagem.jpg, na mesma pasta, faz o quê?',['Copia o arquivo','Apaga o arquivo','Renomeia o arquivo'],2],
+      ['Para remover um diretório com conteúdo, usa-se:',['rm -r Pasta','rm Pasta','dd rm Pasta'],0],
+      ['Em diretórios, a permissão x permite:',['Entrar/travessar com cd','Editar todos os arquivos','Compactar a pasta'],0],
+      ['O primeiro caractere d em drwxr-xr-x indica:',['Arquivo comum','Diretório','Permissão de dono'],1],
+      ['Qual opção define número de linhas em head ou tail?',['-n','-r','-x'],0],
+      ['O comando chown altera principalmente:',['Conteúdo do arquivo','Dono/grupo do arquivo','Nome do arquivo'],1],
+      ['Antes de rm -r, uma boa prática é:',['Conferir pwd e ls','Fechar o terminal','Trocar para GUI'],0]
+    ];let qi=0,score=0,answered=Array(qs.length).fill(null);const quiz=document.getElementById('quiz'),quizResult=document.getElementById('quizResult');
+    function renderQuiz(){const q=qs[qi];quiz.innerHTML=`<div class="card question active"><h3>${qi+1}. ${q[0]}</h3>${q[1].map((o,i)=>`<div class="option ${answered[qi]!==null?(i===q[2]?'correct':(answered[qi]===i?'wrong':'')):''}" onclick="answer(${i})">${String.fromCharCode(65+i)}) ${o}</div>`).join('')}<div class="quizNav"><button class="topbtn" onclick="quizPrev()" ${qi===0?'disabled':''}>← Pergunta anterior</button><button class="topbtn" onclick="quizNext()">${qi===qs.length-1?'Ver resultado':'Próxima pergunta →'}</button></div></div>`}
+    function answer(i){if(answered[qi]===null){answered[qi]=i;if(i===qs[qi][2])score++}renderQuiz()}function quizPrev(){if(qi>0){qi--;renderQuiz()}}function quizNext(){if(qi<qs.length-1){qi++;renderQuiz()}else{showResult()}}function showResult(){quizResult.style.display='block';let msg=score>=8?'Excelente! Você já está pensando como administrador Linux.':score>=5?'Bom trabalho! Revise os pontos marcados e pratique no terminal.':'Continue praticando! O domínio vem com repetição e atenção aos detalhes.';quizResult.innerHTML=`<div class="resultBadge">${score}/${qs.length}</div><h3>${msg}</h3><p>Você pode refazer o quiz ou voltar aos slides para revisar.</p><button class="topbtn" onclick="resetQuiz()">Tentar novamente</button>`;quizResult.scrollIntoView({behavior:'smooth',block:'center'})}function resetQuiz(){score=0;answered=Array(qs.length).fill(null);qi=0;quizResult.style.display='none';renderQuiz()}renderQuiz();update();
+  </script>
+</body>
+</html>
