@@ -292,6 +292,9 @@ aluno       79    69  0 19:16 pts/0    00:00:00 -bash</span></pre></div>
       {q:'No vi, qual tecla entra no modo de inserção?',opts:['i',':','Esc'],a:0},
       {q:'No vi, como sair sem salvar?',opts:[':q!',':wq','ZZ'],a:0}
     ];
+/* QUIZ_SHUFFLE2:questions */
+(()=>{const q=questions;if(!Array.isArray(q)||!q.length)return;const sh=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};const pos=sh(q.map((_,i)=>i%4));q.forEach((it,n)=>{let ar=null,idx=null,set=null;if(Array.isArray(it)&&Array.isArray(it[1])&&Number.isInteger(it[2])){ar=it[1];idx=it[2];set=v=>{it[1]=v.ar;it[2]=v.idx}}else if(it&&Array.isArray(it.o)&&Number.isInteger(it.a)){ar=it.o;idx=it.a;set=v=>{it.o=v.ar;it.a=v.idx}}else if(it&&Array.isArray(it.a)&&Number.isInteger(it.c)){ar=it.a;idx=it.c;set=v=>{it.a=v.ar;it.c=v.idx}}if(!ar||idx<0||idx>=ar.length||ar.length<2)return;const right=ar[idx],rest=ar.filter((_,i)=>i!==idx);sh(rest);const t=pos[n]%ar.length;rest.splice(t,0,right);set({ar:rest,idx:t})})})();
+
     let qIndex=0, answers=Array(questions.length).fill(null);
     function renderQuiz(){const el=document.getElementById('quiz');const q=questions[qIndex];el.innerHTML=`<div class="question active"><div class="pill">Questão ${qIndex+1} de ${questions.length}</div><h3 style="font-size:28px;margin:18px 0">${q.q}</h3>${q.opts.map((o,i)=>`<label class="option ${answers[qIndex]===i?'active':''}" onclick="choose(${i})">${String.fromCharCode(65+i)}) ${o}</label>`).join('')}</div>`;document.getElementById('quizResult').style.display='none';}
     function choose(i){answers[qIndex]=i;renderQuiz();}
