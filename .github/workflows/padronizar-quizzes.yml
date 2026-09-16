@@ -1,0 +1,33 @@
+name: Padronizar quizzes
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/padronizar-quizzes.yml']
+permissions:
+  contents: write
+jobs:
+  ajustar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Embaralhar alternativas e eliminar padrão de posição
+        run: |
+          node <<'NODE'
+          const fs=require('fs'), path=require('path');
+          const root=process.cwd();
+          const marker=v=>`/* QUIZ_SHUFFLE:${v} */`;
+          function files(dir){let out=[];for(const e of fs.readdirSync(dir,{withFileTypes:true})){if(e.name==='.git'||e.name==='.github')continue;const p=path.join(dir,e.name);if(e.isDirectory())out=out.concat(files(p));else if(/\.(html?|js)$/i.test(e.name))out.push(p)}return out}
+          function closeBracket(s,start){let d=0,q=null,esc=false;for(let i=start;i<s.length;i++){const c=s[i];if(q){if(esc){esc=false;continue}if(c==='\\'){esc=true;continue}if(c===q){q=null}continue}if(c==='"'||c==="'"||c==='`'){q=c;continue}if(c==='[')d++;else if(c===']'){d--;if(d===0)return i}}return -1}
+          function snippet(v){return `\n${marker(v)}\n(()=>{const __q=${v};if(!Array.isArray(__q)||!__q.length)return;const __sh=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};const __pos=__sh(__q.map((_,i)=>i%4));__q.forEach((it,qi)=>{let ok=null,ck=null;if(Array.isArray(it.o)&&Number.isInteger(it.a)){ok='o';ck='a'}else if(Array.isArray(it.a)&&Number.isInteger(it.c)){ok='a';ck='c'}else if(Array.isArray(it.options)&&Number.isInteger(it.correctIndex)){ok='options';ck='correctIndex'}else if(Array.isArray(it.options)&&Number.isInteger(it.correct)){ok='options';ck='correct'}else if(Array.isArray(it.answers)&&Number.isInteger(it.correct)){ok='answers';ck='correct'}if(!ok)return;const opts=it[ok],idx=it[ck];if(idx<0||idx>=opts.length||opts.length<2)return;const right=opts[idx],rest=opts.filter((_,i)=>i!==idx);__sh(rest);const target=__pos[qi]%opts.length;rest.splice(target,0,right);it[ok]=rest;it[ck]=target})})();\n`}
+          let changed=[];
+          for(const file of files(root)){let s=fs.readFileSync(file,'utf8'), edits=[];const re=/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*quiz[\w$]*|QUIZ)\s*=\s*\[/gi;let m;while((m=re.exec(s))){const v=m[1];if(s.includes(marker(v)))continue;const start=s.indexOf('[',m.index),end=closeBracket(s,start);if(end<0)continue;let at=end+1;while(/\s/.test(s[at]||''))at++;if(s[at]===';')at++;edits.push({at,text:snippet(v)});re.lastIndex=end+1}for(const e of edits.sort((a,b)=>b.at-a.at))s=s.slice(0,e.at)+e.text+s.slice(e.at);if(edits.length){fs.writeFileSync(file,s);changed.push(path.relative(root,file))}}
+          console.log('Arquivos ajustados:',changed.length,changed.join('\n'));
+          NODE
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git rm --ignore-unmatch .github/workflows/padronizar-quizzes.yml
+          git add -A
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Padroniza posição das respostas dos quizzes'
+          git push
