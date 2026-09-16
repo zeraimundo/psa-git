@@ -1,0 +1,27 @@
+name: Compatibilidade de quizzes
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/quiz-compat.yml']
+permissions:
+  contents: write
+jobs:
+  ajustar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cobrir formatos restantes de quiz
+        run: |
+          node <<'NODE'
+          const fs=require('fs'),path=require('path'),root=process.cwd();
+          function walk(d){let a=[];for(const e of fs.readdirSync(d,{withFileTypes:true})){if(['.git','.github'].includes(e.name))continue;const p=path.join(d,e.name);if(e.isDirectory())a=a.concat(walk(p));else if(/\.(html?|js)$/i.test(e.name))a.push(p)}return a}
+          function endArr(s,start){let d=0,q=null,esc=false;for(let i=start;i<s.length;i++){const c=s[i];if(q){if(esc){esc=false;continue}if(c==='\\'){esc=true;continue}if(c===q)q=null;continue}if(c==='"'||c==="'"||c==='`'){q=c;continue}if(c==='[')d++;else if(c===']'&&--d===0)return i}return -1}
+          function fallback(v){return `\n/* QUIZ_COMPAT:${v} */\n(()=>{const q=${v};if(!Array.isArray(q)||!q.length)return;const sh=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};const pos=sh(q.map((_,i)=>i%4));q.forEach((it,n)=>{let ar=null,idx=null,set=null;if(it&&Array.isArray(it.opts)&&Number.isInteger(it.a)){ar=it.opts;idx=it.a;set=(a,i)=>{it.opts=a;it.a=i}}else if(it&&Array.isArray(it.options)&&Number.isInteger(it.answer)){ar=it.options;idx=it.answer;set=(a,i)=>{it.options=a;it.answer=i}}else if(it&&Array.isArray(it.choices)&&Number.isInteger(it.correct)){ar=it.choices;idx=it.correct;set=(a,i)=>{it.choices=a;it.correct=i}}else if(it&&Array.isArray(it.alternativas)&&Number.isInteger(it.correta)){ar=it.alternativas;idx=it.correta;set=(a,i)=>{it.alternativas=a;it.correta=i}}if(!ar||idx<0||idx>=ar.length||ar.length<2)return;const right=ar[idx],rest=ar.filter((_,i)=>i!==idx);sh(rest);const t=pos[n]%ar.length;rest.splice(t,0,right);set(rest,t)})})();\n`}
+          const dom=`\n<script>/* STATIC_QUIZ_SHUFFLE */document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('[data-correct]').forEach(el=>{const p=el.parentElement;if(!p||p.dataset.quizShuffled)return;const kids=[...p.children];if(kids.filter(x=>x.hasAttribute('data-correct')).length<2)return;for(let i=kids.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));p.appendChild(kids[j]);kids.splice(j,1)}p.dataset.quizShuffled='1'})});</script>\n`;
+          let changed=[];for(const f of walk(root)){let s=fs.readFileSync(f,'utf8'),orig=s,ed=[];const re=/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*\[/g;let m;while((m=re.exec(s))){const v=m[1];if(!/(quiz|questions|perguntas)/i.test(v)||s.includes(`QUIZ_COMPAT:${v}`))continue;const st=s.indexOf('[',m.index),en=endArr(s,st);if(en<0)continue;const block=s.slice(st,en+1);if(!/(opts\s*:|options\s*:).*?(answer\s*:|a\s*:)|choices\s*:|alternativas\s*:/s.test(block))continue;let at=en+1;while(/\s/.test(s[at]||''))at++;if(s[at]===';')at++;ed.push({at,t:fallback(v)});re.lastIndex=en+1}for(const e of ed.sort((a,b)=>b.at-a.at))s=s.slice(0,e.at)+e.t+s.slice(e.at);if(s.includes('data-correct=')&&!s.includes('STATIC_QUIZ_SHUFFLE'))s=s.replace(/<\/body>/i,dom+'</body>');if(s!==orig){fs.writeFileSync(f,s);changed.push(path.relative(root,f))}}console.log(changed);
+          NODE
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm --ignore-unmatch .github/workflows/quiz-compat.yml
+          git add -A
+          git diff --cached --quiet || (git commit -m 'Completa embaralhamento dos quizzes' && git push)
