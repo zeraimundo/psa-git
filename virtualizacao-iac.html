@@ -513,5 +513,7 @@
   }
   draw();
 </script>
+
+<script>/* STATIC_QUIZ_SHUFFLE */document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('[data-correct]').forEach(el=>{const p=el.parentElement;if(!p||p.dataset.quizShuffled)return;const kids=[...p.children];if(kids.filter(x=>x.hasAttribute('data-correct')).length<2)return;for(let i=kids.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));p.appendChild(kids[j]);kids.splice(j,1)}p.dataset.quizShuffled='1'})});</script>
 </body>
 </html>
