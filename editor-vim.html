@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#071226">
+  <title>Editor Vim — Prática de Sistemas Abertos</title>
+  <style>
+    :root{
+      --bg:#050a16;--panel:#0b162b;--panel2:#101f39;--line:#263b60;
+      --text:#edf5ff;--muted:#9baecc;--cyan:#28dcff;--blue:#5a85ff;
+      --violet:#a073ff;--green:#38e7a5;--yellow:#ffd166;--red:#ff7185;
+      --shadow:0 24px 70px rgba(0,0,0,.38);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+    button,a{font:inherit}
+    button{cursor:pointer}
+    code,.mono{font-family:"Cascadia Code","Fira Code",Consolas,monospace}
+    .backdrop{position:fixed;inset:0;z-index:-2;background:
+      radial-gradient(circle at 12% 8%,rgba(40,220,255,.15),transparent 26%),
+      radial-gradient(circle at 88% 15%,rgba(160,115,255,.17),transparent 30%),
+      linear-gradient(180deg,#071226,#040814 72%)}
+    .backdrop:before,.backdrop:after{content:"";position:absolute;border-radius:50%;filter:blur(1px);opacity:.55;animation:float 12s ease-in-out infinite}
+    .backdrop:before{width:5px;height:5px;left:17%;top:30%;box-shadow:20vw 11vh var(--cyan),55vw 4vh var(--violet),68vw 48vh var(--blue),7vw 55vh var(--green),39vw 68vh var(--cyan),76vw 72vh var(--violet)}
+    .backdrop:after{width:3px;height:3px;left:6%;top:14%;box-shadow:13vw 22vh white,32vw 5vh var(--cyan),63vw 18vh white,85vw 39vh var(--violet),20vw 70vh white,52vw 78vh var(--green)}
+    @keyframes float{50%{transform:translateY(-18px) translateX(10px);opacity:.9}}
+    .app{height:100%;display:grid;grid-template-rows:58px 1fr 68px}
+    .topbar{background:rgba(5,11,24,.84);backdrop-filter:blur(18px);border-bottom:1px solid rgba(145,178,230,.16);display:flex;align-items:center;gap:16px;padding:0 18px;z-index:20}
+    .brand{display:flex;align-items:center;gap:10px;min-width:240px;font-weight:850;letter-spacing:-.02em}
+    .brand-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#04111e;font-weight:950}
+    .progress-wrap{height:5px;background:#17243b;border-radius:99px;overflow:hidden;flex:1;max-width:520px}
+    .progress{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--violet));transition:width .35s ease}
+    .top-actions{margin-left:auto;display:flex;gap:7px}
+    .icon-btn{border:1px solid rgba(145,178,230,.18);background:rgba(255,255,255,.035);color:#bdd0ec;border-radius:10px;padding:8px 10px;transition:.2s}
+    .icon-btn:hover{color:white;border-color:rgba(40,220,255,.48);background:rgba(40,220,255,.08)}
+    .stage{position:relative;overflow:hidden}
+    .slide{position:absolute;inset:0;overflow:auto;padding:34px 54px 46px;opacity:0;transform:translateX(30px);pointer-events:none;transition:opacity .3s ease,transform .3s ease}
+    .slide.active{opacity:1;transform:none;pointer-events:auto}
+    .slide-inner{width:min(1180px,100%);min-height:100%;margin:auto;display:flex;flex-direction:column;justify-content:center}
+    .slide-no{font:800 12px/1 monospace;color:var(--cyan);letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px}
+    h1{font-size:clamp(45px,6.4vw,82px);line-height:.96;letter-spacing:-.055em;margin:0 0 22px}
+    h2{font-size:clamp(30px,4vw,50px);line-height:1.05;letter-spacing:-.04em;margin:0 0 18px}
+    h3{margin:0 0 10px;font-size:19px}
+    p{color:#b8c7df;line-height:1.65;margin:0 0 14px}
+    .lead{font-size:clamp(17px,2vw,22px);max-width:800px}
+    .gradient{background:linear-gradient(90deg,#fff 5%,#8deaff 50%,#c1a3ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--cyan);font-weight:850;font-size:12px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px}
+    .live{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 17px var(--green)}
+    .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:44px}
+    .hero-tags,.tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px}
+    .tag{font:700 12px/1 monospace;color:#b9cbe5;border:1px solid rgba(145,178,230,.18);padding:8px 10px;border-radius:9px;background:rgba(255,255,255,.035)}
+    .video-card{border-radius:22px;overflow:hidden;border:1px solid rgba(145,178,230,.22);background:#091326;box-shadow:var(--shadow);position:relative}
+    .video-card img{width:100%;aspect-ratio:16/9;display:block;object-fit:cover;opacity:.78}
+    .video-card:after{content:"▶";position:absolute;left:50%;top:50%;transform:translate(-50%,-58%);width:68px;height:68px;border-radius:50%;display:grid;place-items:center;padding-left:4px;background:rgba(5,11,24,.82);border:1px solid rgba(255,255,255,.25);font-size:25px;color:white}
+    .video-meta{padding:16px 18px;display:flex;justify-content:space-between;gap:16px;color:#aebed8;font-size:13px}
+    .grid2,.grid3,.grid4{display:grid;gap:16px}
+    .grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid4{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .card{background:linear-gradient(145deg,rgba(16,32,58,.92),rgba(8,18,36,.92));border:1px solid rgba(142,175,226,.17);border-radius:17px;padding:19px;box-shadow:0 12px 40px rgba(0,0,0,.14)}
+    .card.accent{border-top:3px solid var(--accent,var(--cyan))}
+    .card p{font-size:14px;margin:0}.card ul{margin:8px 0 0;padding-left:18px;color:#b8c7df;line-height:1.7;font-size:14px}
+    .key{display:inline-grid;place-items:center;min-width:36px;height:34px;padding:0 9px;border:1px solid #405475;border-bottom-width:3px;border-radius:8px;background:#111f36;color:white;font:800 14px monospace;box-shadow:0 4px 10px rgba(0,0,0,.22)}
+    .command-list{display:grid;gap:9px}
+    .command-row{display:grid;grid-template-columns:minmax(95px,155px) 1fr;align-items:start;gap:13px;border-bottom:1px solid rgba(145,178,230,.11);padding:8px 0;color:#b9c9e1}
+    .command-row:last-child{border-bottom:0}.command-row code{color:var(--cyan);font-weight:800;font-size:15px}.command-row strong{color:white}
+    .terminal{background:#07101e;border:1px solid #263a5a;border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+    .term-bar{height:38px;background:#0d1a30;border-bottom:1px solid #203553;display:flex;align-items:center;gap:7px;padding:0 13px;color:#778cac;font:11px monospace}
+    .term-dot{width:9px;height:9px;border-radius:50%}.r{background:#ff6b79}.y{background:#ffd166}.g{background:#38e7a5}
+    pre{white-space:pre-wrap;margin:0;padding:18px 20px;color:#d7e1f1;font:500 13px/1.65 "Cascadia Code",Consolas,monospace}
+    .prompt{color:var(--green)}.cmd{color:var(--cyan)}.comment{color:#7185a5}.warn{color:var(--yellow)}
+    .formula{display:flex;align-items:center;justify-content:center;gap:13px;flex-wrap:wrap;margin:20px 0}.formula .box{padding:15px 19px;border-radius:13px;border:1px solid rgba(40,220,255,.25);background:rgba(40,220,255,.06);font:850 18px monospace;color:#dffaff}.plus{color:var(--violet);font-size:25px;font-weight:900}
+    .callout{margin-top:18px;padding:15px 18px;border-left:4px solid var(--accent,var(--cyan));border-radius:0 13px 13px 0;background:rgba(255,255,255,.045);color:#c4d2e7;line-height:1.55}
+    .mode-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.mode{padding:18px;border-radius:15px;border:1px solid rgba(145,178,230,.18);background:rgba(12,26,48,.87);text-align:center}.mode b{display:block;font-size:17px;margin:8px}.mode small{color:#95a9c7;line-height:1.45;display:block}
+    .mode .bubble{width:42px;height:42px;border-radius:12px;margin:auto;display:grid;place-items:center;background:rgba(40,220,255,.09);color:var(--cyan);font:900 17px monospace}
+    .practice{counter-reset:step;display:grid;gap:10px}.practice li{list-style:none;position:relative;padding:13px 16px 13px 52px;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid rgba(145,178,230,.13);color:#c5d3e7;line-height:1.55}.practice li:before{counter-increment:step;content:counter(step);position:absolute;left:14px;top:12px;width:25px;height:25px;border-radius:8px;display:grid;place-items:center;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#07101d;font-weight:900}
+    .cheatsheet{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.cheat{padding:14px;border-radius:13px;background:rgba(255,255,255,.035);border:1px solid rgba(145,178,230,.13)}.cheat b{display:block;color:var(--cyan);font:800 14px monospace;margin-bottom:7px}.cheat span{color:#aebed6;font-size:12px;line-height:1.45;display:block}
+    .quiz{display:grid;gap:12px}.q{padding:16px;border-radius:15px;background:rgba(10,23,44,.92);border:1px solid rgba(145,178,230,.16)}.q.correct{border-color:rgba(56,231,165,.7);background:rgba(56,231,165,.07)}.q.wrong{border-color:rgba(255,113,133,.72);background:rgba(255,113,133,.07)}.q-title{font-weight:750;line-height:1.45;margin-bottom:10px}.options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.options label{display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border:1px solid rgba(145,178,230,.13);border-radius:9px;color:#b8c8e0;font-size:13px;cursor:pointer}.options label:hover{background:rgba(40,220,255,.05)}.feedback{display:none;margin-top:10px;color:#cbd8ea;font-size:12px;line-height:1.5}.q.correct .feedback,.q.wrong .feedback{display:block}.quiz-actions{display:flex;align-items:center;gap:14px;margin-top:15px}.primary{border:0;border-radius:11px;padding:11px 15px;font-weight:850;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#04101b}.score{font-weight:800;color:#dfeaff}
+    .bottom{background:rgba(5,11,24,.9);backdrop-filter:blur(18px);border-top:1px solid rgba(145,178,230,.15);display:grid;grid-template-columns:180px 1fr 180px;align-items:center;padding:0 18px;z-index:20}
+    .nav-btn{height:42px;border-radius:11px;border:1px solid rgba(145,178,230,.18);background:rgba(255,255,255,.035);color:#d3e0f3;font-weight:800}.nav-btn:hover:not(:disabled){border-color:rgba(40,220,255,.45);background:rgba(40,220,255,.08)}.nav-btn:disabled{opacity:.32;cursor:not-allowed}.counter{text-align:center;color:#8094b4;font:750 12px monospace}.counter b{color:#dbe8fa}
+    dialog{border:1px solid rgba(145,178,230,.22);border-radius:18px;background:#0a1529;color:var(--text);box-shadow:0 28px 90px rgba(0,0,0,.6);width:min(760px,calc(100% - 30px));max-height:82vh;padding:0}dialog::backdrop{background:rgba(0,4,12,.72);backdrop-filter:blur(7px)}
+    .modal-head{position:sticky;top:0;background:#0d1a30;border-bottom:1px solid #223652;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}.modal-head h3{margin:0}.close{border:0;background:transparent;color:white;font-size:23px}.modal-body{padding:20px;overflow:auto}.overview{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.overview button{text-align:left;border:1px solid rgba(145,178,230,.13);background:rgba(255,255,255,.025);color:#b9c9e1;border-radius:10px;padding:10px}.overview button:hover{border-color:var(--cyan);color:white}.source-link{display:block;padding:13px;border:1px solid rgba(145,178,230,.13);border-radius:11px;color:#c7d6e9;text-decoration:none;margin-bottom:9px}.source-link:hover{border-color:var(--cyan)}
+    @media(max-width:900px){.brand span:last-child{display:none}.brand{min-width:36px}.top-actions .label{display:none}.slide{padding:24px 20px 38px}.hero-grid,.grid3,.grid4{grid-template-columns:1fr 1fr}.mode-flow{grid-template-columns:1fr 1fr}.cheatsheet{grid-template-columns:repeat(2,1fr)}.bottom{grid-template-columns:120px 1fr 120px}}
+    @media(max-width:620px){.app{grid-template-rows:54px 1fr 62px}.topbar{padding:0 10px;gap:9px}.progress-wrap{display:none}.icon-btn{padding:7px 8px}.slide{padding:20px 14px 32px}.hero-grid,.grid2,.grid3,.grid4,.options{grid-template-columns:1fr}.mode-flow{grid-template-columns:1fr 1fr}.video-card{display:none}.cheatsheet{grid-template-columns:1fr}.bottom{grid-template-columns:92px 1fr 92px;padding:0 9px}.nav-btn{font-size:12px}.command-row{grid-template-columns:96px 1fr}.overview{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="backdrop"></div>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-icon">V</span><span>PSA • Editor Vim</span></div>
+      <div class="progress-wrap" aria-label="Progresso"><div class="progress" id="progress"></div></div>
+      <div class="top-actions">
+        <button class="icon-btn" onclick="openDialog('overviewDialog')" title="Visão geral">☷ <span class="label">Visão geral</span></button>
+        <button class="icon-btn" onclick="openDialog('sourcesDialog')" title="Fontes">⌁ <span class="label">Fontes</span></button>
+        <button class="icon-btn" onclick="openDialog('helpDialog')" title="Ajuda">? <span class="label">Ajuda</span></button>
+        <button class="icon-btn" onclick="toggleFullscreen()" title="Tela cheia">⛶</button>
+      </div>
+    </header>
+
+    <main class="stage" id="stage">
+      <section class="slide active" data-title="Editor Vim">
+        <div class="slide-inner"><div class="hero-grid">
+          <div><div class="eyebrow"><span class="live"></span> Prática de Sistemas Abertos • IFPB</div><h1><span class="gradient">Editor Vim</span></h1><p class="lead">Edição modal no terminal: navegar, alterar, buscar, automatizar e trabalhar com eficiência sem abandonar a linha de comando.</p><div class="hero-tags"><span class="tag">48 min de vídeo</span><span class="tag">prática guiada</span><span class="tag">vimtutor</span><span class="tag">quiz final</span></div></div>
+          <a class="video-card" href="https://www.youtube.com/watch?v=ILRxposaLqQ" target="_blank" rel="noopener"><img src="https://img.youtube.com/vi/ILRxposaLqQ/maxresdefault.jpg" alt="Miniatura do vídeo Editor vim"><div class="video-meta"><b>Editor vim</b><span>48:01 ↗</span></div></a>
+        </div></div>
+      </section>
+
+      <section class="slide" data-title="A lógica modal">
+        <div class="slide-inner"><div class="slide-no">Fundamento 01</div><h2>O Vim interpreta cada tecla conforme o <span class="gradient">modo ativo</span></h2>
+          <div class="mode-flow">
+            <div class="mode"><span class="bubble">N</span><b>Normal</b><small>Navegação e comandos. É o modo inicial.</small></div>
+            <div class="mode"><span class="bubble">I</span><b>Inserção</b><small>Entrada de texto com <code>i</code>, <code>a</code>, <code>o</code>…</small></div>
+            <div class="mode"><span class="bubble">V</span><b>Visual</b><small>Seleção por caractere, linha ou bloco.</small></div>
+            <div class="mode"><span class="bubble">:</span><b>Linha de comando</b><small>Salvar, sair, substituir, dividir janelas e executar comandos.</small></div>
+          </div>
+          <div class="callout" style="--accent:var(--yellow)"><strong>Atenção:</strong> ao abrir o Vim, você não está digitando texto. Uma sequência como <code>dG</code> é entendida como comando. Se algo der errado, pressione <span class="key">u</span> para desfazer.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Abrir e reconhecer o modo">
+        <div class="slide-inner"><div class="slide-no">Fundamento 02</div><h2>Abrindo um arquivo com segurança</h2>
+          <div class="grid2"><div class="terminal"><div class="term-bar"><span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span> aluno@linux:~</div><pre><span class="prompt">aluno@linux:~$</span> <span class="cmd">vim</span> pratica.py
+
+<span class="comment"># O arquivo abre no modo Normal.</span>
+<span class="comment"># O modo atual aparece na última linha</span>
+<span class="comment"># quando Inserção, Substituição ou Visual.</span></pre></div>
+          <div class="card accent" style="--accent:var(--green)"><h3>Regra de sobrevivência</h3><div class="command-list"><div class="command-row"><code>Esc</code><span>Volta ao modo Normal.</span></div><div class="command-row"><code>u</code><span>Desfaz a última alteração.</span></div><div class="command-row"><code>:q!</code><span>Sai descartando alterações.</span></div><div class="command-row"><code>:wq</code><span>Salva e sai.</span></div></div></div></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Movimento básico">
+        <div class="slide-inner"><div class="slide-no">Navegação 01</div><h2>Movimente-se sem tirar as mãos do teclado</h2>
+          <div class="grid2"><div class="card accent"><h3>Direções</h3><div class="formula"><span class="key">h</span><span class="key">j</span><span class="key">k</span><span class="key">l</span></div><p><code>h</code> esquerda • <code>j</code> desce • <code>k</code> sobe • <code>l</code> direita. Setas também funcionam; Espaço pode avançar e Backspace pode recuar em algumas configurações.</p></div>
+          <div class="card accent" style="--accent:var(--violet)"><h3>Multiplicadores</h3><p>Anteponha um número para repetir um movimento ou operação.</p><div class="terminal" style="margin-top:12px"><pre><span class="cmd">5l</span>   <span class="comment"># cinco caracteres à direita</span>
+<span class="cmd">3j</span>   <span class="comment"># três linhas abaixo</span>
+<span class="cmd">2w</span>   <span class="comment"># duas palavras à frente</span></pre></div></div></div>
+          <div class="callout">A força do Vim vem da composição: <strong>quantidade + comando + movimento</strong>.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Palavras e linhas">
+        <div class="slide-inner"><div class="slide-no">Navegação 02</div><h2>Palavras, início e fim da linha</h2>
+          <div class="grid3"><div class="card accent"><h3>Entre palavras</h3><div class="command-list"><div class="command-row"><code>w</code><span>Próxima palavra.</span></div><div class="command-row"><code>b</code><span>Palavra anterior.</span></div><div class="command-row"><code>W / B</code><span>Saltos maiores: espaços delimitam as PALAVRAS.</span></div></div></div>
+          <div class="card accent" style="--accent:var(--green)"><h3>Começo da linha</h3><div class="command-list"><div class="command-row"><code>0</code><span>Primeira coluna, inclusive espaços.</span></div><div class="command-row"><code>^</code><span>Primeiro caractere não branco.</span></div><div class="command-row"><code>Home</code><span>Equivalente prático a <code>0</code>.</span></div></div></div>
+          <div class="card accent" style="--accent:var(--violet)"><h3>Fim da linha</h3><div class="command-list"><div class="command-row"><code>$</code><span>Último caractere da linha.</span></div><div class="command-row"><code>End</code><span>Atalho equivalente disponível em muitos terminais.</span></div></div></div></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Arquivo e páginas">
+        <div class="slide-inner"><div class="slide-no">Navegação 03</div><h2>Saltos amplos no arquivo</h2>
+          <div class="grid3"><div class="card accent"><h3>Arquivo e linha</h3><div class="command-list"><div class="command-row"><code>gg / 1G</code><span>Primeira linha.</span></div><div class="command-row"><code>G</code><span>Última linha.</span></div><div class="command-row"><code>20G</code><span>Vai à linha 20.</span></div><div class="command-row"><code>Ctrl-g</code><span>Exibe arquivo, linha e progresso.</span></div></div></div>
+          <div class="card accent" style="--accent:var(--green)"><h3>Páginas e meia página</h3><div class="command-list"><div class="command-row"><code>Ctrl-f</code><span>Página adiante.</span></div><div class="command-row"><code>Ctrl-b</code><span>Página anterior.</span></div><div class="command-row"><code>Ctrl-d</code><span>Meia página abaixo.</span></div><div class="command-row"><code>Ctrl-u</code><span>Meia página acima.</span></div></div></div>
+          <div class="card accent" style="--accent:var(--violet)"><h3>Tela visível</h3><div class="command-list"><div class="command-row"><code>H</code><span>Topo da tela.</span></div><div class="command-row"><code>M</code><span>Meio da tela.</span></div><div class="command-row"><code>L</code><span>Parte inferior da tela.</span></div></div><p style="margin-top:10px">Page Up/Down também podem ser usados.</p></div></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Inserir texto">
+        <div class="slide-inner"><div class="slide-no">Edição 01</div><h2>Entradas no modo de Inserção</h2>
+          <div class="grid3"><div class="card accent"><h3>Na posição do cursor</h3><div class="command-list"><div class="command-row"><code>i</code><span>Insere antes.</span></div><div class="command-row"><code>a</code><span>Adiciona depois.</span></div></div></div>
+          <div class="card accent" style="--accent:var(--green)"><h3>Na linha atual</h3><div class="command-list"><div class="command-row"><code>I</code><span>Início não branco.</span></div><div class="command-row"><code>A</code><span>Final da linha.</span></div></div></div>
+          <div class="card accent" style="--accent:var(--violet)"><h3>Nova linha</h3><div class="command-list"><div class="command-row"><code>o</code><span>Abre linha abaixo.</span></div><div class="command-row"><code>O</code><span>Abre linha acima.</span></div></div></div></div>
+          <div class="formula"><span class="box">comando de entrada</span><span class="plus">→</span><span class="box">digitar texto</span><span class="plus">→</span><span class="key">Esc</span></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Apagar com precisão">
+        <div class="slide-inner"><div class="slide-no">Edição 02</div><h2>O operador <code>d</code> apaga até um movimento</h2>
+          <div class="formula"><span class="box">quantidade</span><span class="plus">+</span><span class="box">d</span><span class="plus">+</span><span class="box">movimento</span></div>
+          <div class="grid3"><div class="card accent"><h3>Caracteres e palavras</h3><div class="command-list"><div class="command-row"><code>x / 5x</code><span>Apaga 1 ou 5 caracteres.</span></div><div class="command-row"><code>dw / 2dw</code><span>Apaga 1 ou 2 palavras.</span></div></div></div>
+          <div class="card accent" style="--accent:var(--green)"><h3>Linhas</h3><div class="command-list"><div class="command-row"><code>dd</code><span>Apaga a linha.</span></div><div class="command-row"><code>dG</code><span>Do cursor ao fim do arquivo.</span></div></div></div>
+          <div class="card accent" style="--accent:var(--violet)"><h3>Trechos da linha</h3><div class="command-list"><div class="command-row"><code>d$ / D</code><span>Até o fim.</span></div><div class="command-row"><code>d^</code><span>Até o primeiro caractere não branco.</span></div></div></div></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Substituir e alterar">
+        <div class="slide-inner"><div class="slide-no">Edição 03</div><h2>Substituição pontual ou mudança estrutural</h2>
+          <div class="grid2"><div class="card accent"><h3>Substituir</h3><div class="command-list"><div class="command-row"><code>rX</code><span>Troca o caractere atual por <code>X</code> e volta ao Normal.</span></div><div class="command-row"><code>R</code><span>Entra no modo Substituição; sobrescreve até <code>Esc</code>.</span></div></div></div>
+          <div class="card accent" style="--accent:var(--green)"><h3>Alterar — operador <code>c</code></h3><div class="command-list"><div class="command-row"><code>cw</code><span>Apaga a palavra e entra em Inserção.</span></div><div class="command-row"><code>cc</code><span>Altera a linha inteira.</span></div><div class="command-row"><code>c$ / c^</code><span>Altera até fim/início.</span></div><div class="command-row"><code>cG</code><span>Altera até o fim do arquivo.</span></div></div></div></div>
+          <div class="callout" style="--accent:var(--green)"><strong>Modelo mental:</strong> o movimento mantém seu significado. <code>$</code> vai ao fim; <code>d$</code> apaga até o fim; <code>c$</code> apaga e inicia nova digitação.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Desfazer, refazer e repetir">
+        <div class="slide-inner"><div class="slide-no">Edição 04</div><h2>Corrija erros e replique operações</h2>
+          <div class="grid3"><div class="card accent"><span class="key">u</span><h3 style="margin-top:13px">Desfazer</h3><p>Repita <code>u</code> para voltar por várias alterações.</p></div><div class="card accent" style="--accent:var(--green)"><span class="key">Ctrl-r</span><h3 style="margin-top:13px">Refazer</h3><p>Restaura o que foi desfeito — equivalente conceitual ao “refazer”.</p></div><div class="card accent" style="--accent:var(--violet)"><span class="key">.</span><h3 style="margin-top:13px">Repetir</h3><p>Executa novamente a última alteração no ponto atual.</p></div></div>
+          <div class="terminal" style="margin-top:18px"><pre><span class="cmd">60i-Esc</span>  <span class="comment"># insere sessenta hífens</span>
+<span class="cmd">.</span>         <span class="comment"># repete a mesma alteração em outro ponto</span></pre></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Copiar e colar">
+        <div class="slide-inner"><div class="slide-no">Edição 05</div><h2><code>y</code> copia; <code>p</code> e <code>P</code> colam</h2>
+          <div class="grid3"><div class="card accent"><h3>Copiar (yank)</h3><div class="command-list"><div class="command-row"><code>yy</code><span>Linha inteira.</span></div><div class="command-row"><code>yw</code><span>Uma palavra.</span></div><div class="command-row"><code>yG</code><span>Até o fim do arquivo.</span></div><div class="command-row"><code>y$ / y^</code><span>Até fim/início da linha.</span></div></div></div>
+          <div class="card accent" style="--accent:var(--green)"><h3>Colar</h3><div class="command-list"><div class="command-row"><code>p</code><span>Depois do cursor ou abaixo da linha.</span></div><div class="command-row"><code>P</code><span>Antes do cursor ou acima da linha.</span></div></div></div>
+          <div class="card accent" style="--accent:var(--violet)"><h3>Detalhe útil</h3><p>Conteúdo apagado por <code>d</code> também vai para um registrador e pode ser recuperado com <code>p</code> ou <code>P</code>.</p></div></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Buscar no arquivo">
+        <div class="slide-inner"><div class="slide-no">Pesquisa</div><h2>Localize ocorrências em qualquer direção</h2>
+          <div class="grid2"><div class="terminal"><div class="term-bar"><span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span> busca no Vim</div><pre><span class="cmd">/print</span>  <span class="comment"># busca para frente</span>
+<span class="cmd">?print</span>  <span class="comment"># busca para trás</span>
+<span class="cmd">n</span>       <span class="comment"># próxima na direção atual</span>
+<span class="cmd">N</span>       <span class="comment"># próxima na direção oposta</span></pre></div>
+          <div class="card accent" style="--accent:var(--green)"><h3>Maiúsculas e minúsculas</h3><div class="command-list"><div class="command-row"><code>:set ignorecase</code><span>Busca sem diferenciar caixa.</span></div><div class="command-row"><code>:set noignorecase</code><span>Restaura a diferenciação.</span></div><div class="command-row"><code>~</code><span>Alterna a caixa do caractere sob o cursor.</span></div></div></div></div>
+          <div class="callout">Ao chegar ao fim ou ao início, o Vim normalmente continua a busca do outro lado do arquivo (<em>wrapscan</em>).</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Modo Visual">
+        <div class="slide-inner"><div class="slide-no">Seleção</div><h2>Selecione e aplique uma operação</h2>
+          <div class="grid3"><div class="card accent"><span class="key">v</span><h3 style="margin-top:13px">Por caractere</h3><p>Marca um trecho livre do texto.</p></div><div class="card accent" style="--accent:var(--green)"><span class="key">V</span><h3 style="margin-top:13px">Por linha</h3><p>Seleciona linhas completas.</p></div><div class="card accent" style="--accent:var(--violet)"><span class="key">Ctrl-v</span><h3 style="margin-top:13px">Por bloco</h3><p>Cria seleção retangular por colunas.</p></div></div>
+          <div class="formula"><span class="box">selecionar</span><span class="plus">→</span><span class="box">mover</span><span class="plus">→</span><span class="box">d / y / c</span><span class="plus">→</span><span class="box">p / P</span></div>
+          <p class="lead">No vídeo, um bloco é selecionado com <code>Ctrl-v</code>, apagado com <code>d</code> e depois recolocado com <code>P</code>.</p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Salvar, ler e sair">
+        <div class="slide-inner"><div class="slide-no">Linha de comando 01</div><h2>Comandos essenciais iniciados por <code>:</code></h2>
+          <div class="grid3"><div class="card accent"><h3>Gravar</h3><div class="command-list"><div class="command-row"><code>:w</code><span>Salva o arquivo atual.</span></div><div class="command-row"><code>:w copia.py</code><span>Grava uma cópia, mas continua editando o arquivo original.</span></div><div class="command-row"><code>:r copia.py</code><span>Insere o conteúdo do arquivo abaixo do cursor.</span></div></div></div>
+          <div class="card accent" style="--accent:var(--green)"><h3>Sair</h3><div class="command-list"><div class="command-row"><code>:q</code><span>Sai se não houver alterações.</span></div><div class="command-row"><code>:q!</code><span>Sai sem salvar.</span></div><div class="command-row"><code>:wq</code><span>Salva e sai.</span></div><div class="command-row"><code>:x</code><span>Salva se necessário e sai.</span></div></div></div>
+          <div class="card accent" style="--accent:var(--violet)"><h3>Linha direta</h3><div class="command-list"><div class="command-row"><code>:11</code><span>Vai à linha 11.</span></div><div class="command-row"><code>Esc / Ctrl-c</code><span>Cancela a linha de comando.</span></div></div></div></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Shell dentro do Vim">
+        <div class="slide-inner"><div class="slide-no">Linha de comando 02</div><h2>Integre o editor ao sistema</h2>
+          <div class="grid2"><div class="card accent"><h3>Executar fora do texto</h3><div class="command-list"><div class="command-row"><code>:sh</code><span>Abre um shell; use <code>exit</code> para voltar.</span></div><div class="command-row"><code>:!ls</code><span>Executa <code>ls</code> e mostra a saída; Enter retorna ao Vim.</span></div></div></div>
+          <div class="card accent" style="--accent:var(--green)"><h3>Trazer a saída para o texto</h3><div class="command-list"><div class="command-row"><code>:r !ls</code><span>Insere a saída de <code>ls</code> abaixo do cursor.</span></div><div class="command-row"><code>!!ls</code><span>Filtra a linha atual pelo comando e a substitui pela saída.</span></div></div></div></div>
+          <div class="terminal" style="margin-top:18px"><pre><span class="comment"># Exemplo de documentação de armazenamento</span>
+<span class="cmd">:r !lsblk -f</span>  <span class="comment"># inclui no arquivo a tabela de blocos e sistemas de arquivos</span></pre></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Substituição em lote">
+        <div class="slide-inner"><div class="slide-no">Linha de comando 03</div><h2>Localizar e substituir com controle</h2>
+          <div class="terminal"><div class="term-bar"><span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span> sintaxe de substituição</div><pre><span class="cmd">:1,10s/Scan/KKK/gc</span>
+ <span class="comment">│    │   │    └─ c: confirma cada troca</span>
+ <span class="comment">│    │   └────── g: todas as ocorrências por linha</span>
+ <span class="comment">│    └────────── novo texto</span>
+ <span class="comment">└─────────────── intervalo de linhas</span>
+
+<span class="cmd">:%s/antigo/novo/gc</span>  <span class="comment"># arquivo inteiro, com confirmação</span></pre></div>
+          <div class="grid4" style="margin-top:16px"><div class="card"><h3><code>y</code></h3><p>Sim, troca.</p></div><div class="card"><h3><code>n</code></h3><p>Não, pula.</p></div><div class="card"><h3><code>a</code></h3><p>Troca todas as restantes.</p></div><div class="card"><h3><code>q</code></h3><p>Interrompe.</p></div></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Dividir janelas">
+        <div class="slide-inner"><div class="slide-no">Linha de comando 04</div><h2>Edite mais de um arquivo na mesma tela</h2>
+          <div class="grid2"><div class="card accent"><h3>Criar divisões</h3><div class="command-list"><div class="command-row"><code>:split teste.txt</code><span>Divisão horizontal.</span></div><div class="command-row"><code>:vsplit teste.py</code><span>Divisão vertical.</span></div><div class="command-row"><code>:q</code><span>Fecha a janela ativa.</span></div></div></div>
+          <div class="card accent" style="--accent:var(--green)"><h3>Navegar entre janelas</h3><div class="command-list"><div class="command-row"><code>Ctrl-w w</code><span>Vai para a próxima janela.</span></div><div class="command-row"><code>Ctrl-w h/j/k/l</code><span>Escolhe a janela pela direção.</span></div><div class="command-row"><code>Ctrl-w + seta</code><span>Alternativa com setas.</span></div></div></div></div>
+          <div class="callout" style="--accent:var(--violet)"><strong>Aplicação:</strong> código em uma janela, arquivo de configuração ou resultado de comando em outra.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Vimtutor">
+        <div class="slide-inner"><div class="hero-grid"><div><div class="slide-no">Aprender praticando</div><h2>Seu laboratório guiado já vem com o Vim</h2><p class="lead">O <code>vimtutor</code> apresenta navegação, saída, edição e outros comandos passo a passo. Em muitos sistemas, acompanha o idioma do ambiente.</p><div class="terminal" style="margin-top:18px"><pre><span class="prompt">aluno@linux:~$</span> <span class="cmd">vimtutor</span>
+<span class="comment"># Leia, execute e corrija os exercícios no próprio arquivo.</span></pre></div></div>
+          <div class="card accent" style="--accent:var(--green)"><h3>Por que funciona?</h3><ul><li>Transforma memorização em ação.</li><li>Treina retorno ao modo Normal.</li><li>Cria memória muscular com comandos compostos.</li><li>Permite errar e desfazer sem risco.</li></ul></div></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Prática guiada">
+        <div class="slide-inner"><div class="slide-no">Atividade rápida • 20–25 min</div><h2>Desafio: relatório do laboratório</h2>
+          <div class="grid2"><ol class="practice"><li>Crie e abra <code>relatorio.txt</code> com <code>vim relatorio.txt</code>.</li><li>Insira um título e três linhas usando <code>i</code>, <code>o</code> e <code>O</code>.</li><li>Use <code>60i-Esc</code> para criar um separador e <code>.</code> para repeti-lo.</li><li>Copie uma linha com <code>yy</code>, cole com <code>p</code> e altere-a com <code>cw</code>.</li></ol>
+          <ol class="practice" style="counter-reset:step 4"><li>Busque uma palavra com <code>/</code> e navegue com <code>n</code>/<code>N</code>.</li><li>Insira informações do sistema com <code>:r !uname -a</code> e <code>:r !lsblk -f</code>.</li><li>Faça uma substituição global com confirmação: <code>:%s/Linux/GNU\/Linux/gc</code>.</li><li>Divida a tela para outro arquivo, salve e saia com <code>:wq</code>.</li></ol></div>
+          <div class="callout"><strong>Entregável:</strong> arquivo legível, comandos executados e breve explicação de qual modo foi usado em cada etapa.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Mapa mental">
+        <div class="slide-inner"><div class="slide-no">Revisão</div><h2>Mapa de comandos essenciais</h2>
+          <div class="cheatsheet"><div class="cheat"><b>h j k l</b><span>mover</span></div><div class="cheat"><b>w b 0 ^ $</b><span>palavras e linha</span></div><div class="cheat"><b>gg G nG</b><span>arquivo e linha</span></div><div class="cheat"><b>i a I A o O</b><span>inserir</span></div><div class="cheat"><b>Esc</b><span>modo Normal</span></div><div class="cheat"><b>x dw dd d$</b><span>apagar</span></div><div class="cheat"><b>r R cw cc</b><span>substituir/alterar</span></div><div class="cheat"><b>u Ctrl-r .</b><span>desfazer/refazer/repetir</span></div><div class="cheat"><b>yy yw p P</b><span>copiar/colar</span></div><div class="cheat"><b>/ ? n N</b><span>buscar</span></div><div class="cheat"><b>v V Ctrl-v</b><span>selecionar</span></div><div class="cheat"><b>:w :q! :wq</b><span>gravar/sair</span></div><div class="cheat"><b>:!cmd</b><span>executar comando</span></div><div class="cheat"><b>:r !cmd</b><span>inserir saída</span></div><div class="cheat"><b>:split :vsplit</b><span>dividir janelas</span></div></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Quiz final">
+        <div class="slide-inner" style="justify-content:flex-start"><div class="slide-no">Avaliação formativa</div><h2>Quiz: pense como o Vim</h2><p>As questões exigem composição de comandos, não apenas memorização.</p>
+          <div class="quiz" id="quiz">
+            <div class="q" data-answer="b" data-explanation="3dw combina quantidade 3, operador d e movimento w."><div class="q-title">1. Qual comando apaga três palavras a partir do cursor?</div><div class="options"><label><input type="radio" name="q1" value="a"> d3</label><label><input type="radio" name="q1" value="b"> 3dw</label><label><input type="radio" name="q1" value="c"> 3xw</label><label><input type="radio" name="q1" value="d"> d$3</label></div><div class="feedback"></div></div>
+            <div class="q" data-answer="c" data-explanation="^ vai ao primeiro caractere não branco; 0 vai à coluna inicial."><div class="q-title">2. Uma linha começa com quatro espaços. Qual tecla vai ao primeiro caractere não branco?</div><div class="options"><label><input type="radio" name="q2" value="a"> 0</label><label><input type="radio" name="q2" value="b"> Home</label><label><input type="radio" name="q2" value="c"> ^</label><label><input type="radio" name="q2" value="d"> $</label></div><div class="feedback"></div></div>
+            <div class="q" data-answer="d" data-explanation=":r !comando lê a saída do shell e a insere abaixo do cursor."><div class="q-title">3. Como inserir a saída de <code>lsblk -f</code> no arquivo?</div><div class="options"><label><input type="radio" name="q3" value="a"> :!lsblk -f</label><label><input type="radio" name="q3" value="b"> :sh lsblk -f</label><label><input type="radio" name="q3" value="c"> !!lsblk -f</label><label><input type="radio" name="q3" value="d"> :r !lsblk -f</label></div><div class="feedback"></div></div>
+            <div class="q" data-answer="a" data-explanation="N repete a busca no sentido oposto ao comando inicial."><div class="q-title">4. Após <code>/erro</code>, qual tecla busca a ocorrência anterior?</div><div class="options"><label><input type="radio" name="q4" value="a"> N</label><label><input type="radio" name="q4" value="b"> n</label><label><input type="radio" name="q4" value="c"> b</label><label><input type="radio" name="q4" value="d"> ?</label></div><div class="feedback"></div></div>
+            <div class="q" data-answer="c" data-explanation="c$ remove do cursor ao fim e entra em Inserção."><div class="q-title">5. Qual comando troca do cursor até o fim da linha e já permite digitar?</div><div class="options"><label><input type="radio" name="q5" value="a"> d$</label><label><input type="radio" name="q5" value="b"> R$</label><label><input type="radio" name="q5" value="c"> c$</label><label><input type="radio" name="q5" value="d"> r$</label></div><div class="feedback"></div></div>
+            <div class="q" data-answer="b" data-explanation="Ctrl-v inicia uma seleção retangular por blocos."><div class="q-title">6. Qual modo seleciona uma coluna retangular?</div><div class="options"><label><input type="radio" name="q6" value="a"> V</label><label><input type="radio" name="q6" value="b"> Ctrl-v</label><label><input type="radio" name="q6" value="c"> v</label><label><input type="radio" name="q6" value="d"> Ctrl-b</label></div><div class="feedback"></div></div>
+            <div class="q" data-answer="d" data-explanation=":w cópia grava outro arquivo, mas o buffer continua associado ao original."><div class="q-title">7. Após <code>:w copia.txt</code>, qual arquivo permanece sendo editado?</div><div class="options"><label><input type="radio" name="q7" value="a"> Apenas copia.txt</label><label><input type="radio" name="q7" value="b"> Nenhum</label><label><input type="radio" name="q7" value="c"> Os dois simultaneamente</label><label><input type="radio" name="q7" value="d"> O arquivo original</label></div><div class="feedback"></div></div>
+            <div class="q" data-answer="a" data-explanation="O sinal % escolhe todas as linhas; g todas as ocorrências; c pede confirmação."><div class="q-title">8. Qual comando troca todas as ocorrências no arquivo, pedindo confirmação?</div><div class="options"><label><input type="radio" name="q8" value="a"> :%s/a/b/gc</label><label><input type="radio" name="q8" value="b"> :s/a/b</label><label><input type="radio" name="q8" value="c"> :1s/a/b/c</label><label><input type="radio" name="q8" value="d"> /a/b/g</label></div><div class="feedback"></div></div>
+            <div class="q" data-answer="c" data-explanation="O ponto repete a última alteração completa no novo local."><div class="q-title">9. Depois de <code>60i-Esc</code>, como repetir a linha de hífens em outro ponto?</div><div class="options"><label><input type="radio" name="q9" value="a"> u</label><label><input type="radio" name="q9" value="b"> Ctrl-r</label><label><input type="radio" name="q9" value="c"> .</label><label><input type="radio" name="q9" value="d"> 60.</label></div><div class="feedback"></div></div>
+            <div class="q" data-answer="b" data-explanation="Ctrl-w w percorre janelas; Ctrl-w seguido de h/j/k/l escolhe pela direção."><div class="q-title">10. Em telas divididas, qual sequência vai à próxima janela?</div><div class="options"><label><input type="radio" name="q10" value="a"> Ctrl-n</label><label><input type="radio" name="q10" value="b"> Ctrl-w w</label><label><input type="radio" name="q10" value="c"> :next</label><label><input type="radio" name="q10" value="d"> Tab</label></div><div class="feedback"></div></div>
+          </div><div class="quiz-actions"><button class="primary" onclick="gradeQuiz()">Corrigir quiz</button><button class="icon-btn" onclick="resetQuiz()">Refazer</button><span class="score" id="score"></span></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Fechamento">
+        <div class="slide-inner"><div class="eyebrow"><span class="live"></span> objetivo concluído</div><h1><span class="gradient">Pense em operações,<br>não em menus.</span></h1><p class="lead">No Vim, velocidade surge quando você combina operadores, quantidades e movimentos — e pratica até que os comandos se tornem naturais.</p><div class="hero-tags"><span class="tag">execute vimtutor</span><span class="tag">pratique diariamente</span><span class="tag">consulte :help</span></div></div>
+      </section>
+    </main>
+
+    <footer class="bottom"><button class="nav-btn" id="prev" onclick="changeSlide(-1)">← Anterior</button><div class="counter"><b id="current">01</b> / <span id="total">22</span> • <span id="slideTitle">Editor Vim</span></div><button class="nav-btn" id="next" onclick="changeSlide(1)">Próximo →</button></footer>
+  </div>
+
+  <dialog id="overviewDialog"><div class="modal-head"><h3>Visão geral</h3><button class="close" onclick="closeDialog('overviewDialog')">×</button></div><div class="modal-body"><div class="overview" id="overview"></div></div></dialog>
+  <dialog id="sourcesDialog"><div class="modal-head"><h3>Fontes e continuidade</h3><button class="close" onclick="closeDialog('sourcesDialog')">×</button></div><div class="modal-body"><a class="source-link" href="https://www.youtube.com/watch?v=ILRxposaLqQ" target="_blank" rel="noopener"><strong>Fonte principal:</strong> vídeo “Editor vim” — Batleo, 48:01 ↗</a><div class="source-link"><strong>No próprio Vim:</strong> use <code>:help</code>, <code>:help motion</code>, <code>:help change</code> e <code>:help windows</code>.</div><div class="source-link"><strong>Prática guiada:</strong> execute <code>vimtutor</code> no terminal.</div></div></dialog>
+  <dialog id="helpDialog"><div class="modal-head"><h3>Como usar a apresentação</h3><button class="close" onclick="closeDialog('helpDialog')">×</button></div><div class="modal-body"><div class="command-list"><div class="command-row"><code>→ / Espaço</code><span>Próximo slide</span></div><div class="command-row"><code>←</code><span>Slide anterior</span></div><div class="command-row"><code>Home / End</code><span>Primeiro / último slide</span></div><div class="command-row"><code>F</code><span>Tela cheia</span></div><div class="command-row"><code>Esc</code><span>Fecha janelas ou sai da tela cheia</span></div></div></div></dialog>
+
+  <script>
+    const slides=[...document.querySelectorAll('.slide')];
+    let index=0;
+    const current=document.getElementById('current'), total=document.getElementById('total'), slideTitle=document.getElementById('slideTitle'), progress=document.getElementById('progress'), prev=document.getElementById('prev'), next=document.getElementById('next'), overview=document.getElementById('overview');
+    total.textContent=String(slides.length).padStart(2,'0');
+    slides.forEach((s,i)=>{const b=document.createElement('button');b.textContent=`${String(i+1).padStart(2,'0')} · ${s.dataset.title}`;b.onclick=()=>{goTo(i);closeDialog('overviewDialog')};overview.appendChild(b)});
+    function render(){slides.forEach((s,i)=>s.classList.toggle('active',i===index));current.textContent=String(index+1).padStart(2,'0');slideTitle.textContent=slides[index].dataset.title;progress.style.width=`${((index+1)/slides.length)*100}%`;prev.disabled=index===0;next.disabled=index===slides.length-1;slides[index].scrollTop=0;document.title=`${slides[index].dataset.title} — Editor Vim`}
+    function goTo(i){index=Math.max(0,Math.min(slides.length-1,i));render()}
+    function changeSlide(delta){goTo(index+delta)}
+    function openDialog(id){document.getElementById(id).showModal()}
+    function closeDialog(id){document.getElementById(id).close()}
+    function toggleFullscreen(){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}
+    document.addEventListener('keydown',e=>{if(document.querySelector('dialog[open]'))return;if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();changeSlide(1)}if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();changeSlide(-1)}if(e.key==='Home')goTo(0);if(e.key==='End')goTo(slides.length-1);if(e.key.toLowerCase()==='f')toggleFullscreen()});
+    function gradeQuiz(){let hits=0;document.querySelectorAll('.q').forEach((q,i)=>{q.classList.remove('correct','wrong');const picked=q.querySelector(`input[name="q${i+1}"]:checked`);const ok=picked&&picked.value===q.dataset.answer;q.classList.add(ok?'correct':'wrong');if(ok)hits++;q.querySelector('.feedback').innerHTML=`<strong>${ok?'Correto.':'Revise.'}</strong> ${q.dataset.explanation}`});document.getElementById('score').textContent=`Resultado: ${hits}/10`}
+    function resetQuiz(){document.querySelectorAll('.q').forEach(q=>{q.classList.remove('correct','wrong');q.querySelectorAll('input').forEach(i=>i.checked=false);q.querySelector('.feedback').textContent=''});document.getElementById('score').textContent=''}
+    render();
+  </script>
+</body>
+</html>
