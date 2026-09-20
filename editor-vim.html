@@ -310,7 +310,7 @@
     const current=document.getElementById('current'), total=document.getElementById('total'), slideTitle=document.getElementById('slideTitle'), progress=document.getElementById('progress'), prev=document.getElementById('prev'), next=document.getElementById('next'), overview=document.getElementById('overview');
     total.textContent=String(slides.length).padStart(2,'0');
     slides.forEach((s,i)=>{const b=document.createElement('button');b.textContent=`${String(i+1).padStart(2,'0')} · ${s.dataset.title}`;b.onclick=()=>{goTo(i);closeDialog('overviewDialog')};overview.appendChild(b)});
-    function render(){slides.forEach((s,i)=>s.classList.toggle('active',i===index));current.textContent=String(index+1).padStart(2,'0');slideTitle.textContent=slides[index].dataset.title;progress.style.width=`${((index+1)/slides.length)*100}%`;prev.disabled=index===0;next.disabled=index===slides.length-1;slides[index].scrollTop=0;document.title=`${slides[index].dataset.title} — Editor Vim`}
+    function render(){slides.forEach((s,i)=>s.classList.toggle('active',i===index));current.textContent=String(index+1).padStart(2,'0');slideTitle.textContent=slides[index].dataset.title;progress.style.width=`${((index+1)/slides.length)*100}%`;prev.disabled=index===0;next.disabled=index===slides.length-1;slides[index].scrollTop=0;document.title=`${slides[index].dataset.title} — PSA`}
     function goTo(i){index=Math.max(0,Math.min(slides.length-1,i));render()}
     function changeSlide(delta){goTo(index+delta)}
     function openDialog(id){document.getElementById(id).showModal()}
