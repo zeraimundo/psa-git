@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#071226">
+  <title>Filtros e Pipelines — Prática de Sistemas Abertos</title>
+  <style>
+    :root{
+      --bg:#050a16;--panel:#0b162b;--panel2:#101f39;--line:#263b60;
+      --text:#edf5ff;--muted:#9baecc;--cyan:#28dcff;--blue:#5a85ff;
+      --violet:#a073ff;--green:#38e7a5;--yellow:#ffd166;--red:#ff7185;
+      --shadow:0 24px 70px rgba(0,0,0,.38);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+    button,a{font:inherit}
+    button{cursor:pointer}
+    code,.mono{font-family:"Cascadia Code","Fira Code",Consolas,monospace}
+    .backdrop{position:fixed;inset:0;z-index:-2;background:
+      radial-gradient(circle at 12% 8%,rgba(40,220,255,.15),transparent 26%),
+      radial-gradient(circle at 88% 15%,rgba(160,115,255,.17),transparent 30%),
+      linear-gradient(180deg,#071226,#040814 72%)}
+    .backdrop:before,.backdrop:after{content:"";position:absolute;border-radius:50%;filter:blur(1px);opacity:.55;animation:float 12s ease-in-out infinite}
+    .backdrop:before{width:5px;height:5px;left:17%;top:30%;box-shadow:20vw 11vh var(--cyan),55vw 4vh var(--violet),68vw 48vh var(--blue),7vw 55vh var(--green),39vw 68vh var(--cyan),76vw 72vh var(--violet)}
+    .backdrop:after{width:3px;height:3px;left:6%;top:14%;box-shadow:13vw 22vh white,32vw 5vh var(--cyan),63vw 18vh white,85vw 39vh var(--violet),20vw 70vh white,52vw 78vh var(--green)}
+    @keyframes float{50%{transform:translateY(-18px) translateX(10px);opacity:.9}}
+    .app{height:100%;display:grid;grid-template-rows:58px 1fr 68px}
+    .topbar{background:rgba(5,11,24,.84);backdrop-filter:blur(18px);border-bottom:1px solid rgba(145,178,230,.16);display:flex;align-items:center;gap:16px;padding:0 18px;z-index:20}
+    .brand{display:flex;align-items:center;gap:10px;min-width:240px;font-weight:850;letter-spacing:-.02em}
+    .brand-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#04111e;font-weight:950}
+    .progress-wrap{height:5px;background:#17243b;border-radius:99px;overflow:hidden;flex:1;max-width:520px}
+    .progress{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--violet));transition:width .35s ease}
+    .top-actions{margin-left:auto;display:flex;gap:7px}
+    .icon-btn{border:1px solid rgba(145,178,230,.18);background:rgba(255,255,255,.035);color:#bdd0ec;border-radius:10px;padding:8px 10px;transition:.2s}
+    .icon-btn:hover{color:white;border-color:rgba(40,220,255,.48);background:rgba(40,220,255,.08)}
+    .stage{position:relative;overflow:hidden}
+    .slide{position:absolute;inset:0;overflow:auto;padding:34px 54px 46px;opacity:0;transform:translateX(30px);pointer-events:none;transition:opacity .3s ease,transform .3s ease}
+    .slide.active{opacity:1;transform:none;pointer-events:auto}
+    .slide-inner{width:min(1180px,100%);min-height:100%;margin:auto;display:flex;flex-direction:column;justify-content:center}
+    .slide-no{font:800 12px/1 monospace;color:var(--cyan);letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px}
+    h1{font-size:clamp(45px,6.4vw,82px);line-height:.96;letter-spacing:-.055em;margin:0 0 22px}
+    h2{font-size:clamp(30px,4vw,50px);line-height:1.05;letter-spacing:-.04em;margin:0 0 18px}
+    h3{margin:0 0 10px;font-size:19px}
+    p{color:#b8c7df;line-height:1.65;margin:0 0 14px}
+    .lead{font-size:clamp(17px,2vw,22px);max-width:800px}
+    .gradient{background:linear-gradient(90deg,#fff 5%,#8deaff 50%,#c1a3ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--cyan);font-weight:850;font-size:12px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px}
+    .live{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 17px var(--green)}
+    .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:44px}
+    .hero-tags,.tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px}
+    .tag{font:700 12px/1 monospace;color:#b9cbe5;border:1px solid rgba(145,178,230,.18);padding:8px 10px;border-radius:9px;background:rgba(255,255,255,.035)}
+    .video-card{border-radius:22px;overflow:hidden;border:1px solid rgba(145,178,230,.22);background:#091326;box-shadow:var(--shadow);position:relative}
+    .video-card img{width:100%;aspect-ratio:16/9;display:block;object-fit:cover;opacity:.78}
+    .video-card:after{content:"▶";position:absolute;left:50%;top:50%;transform:translate(-50%,-58%);width:68px;height:68px;border-radius:50%;display:grid;place-items:center;padding-left:4px;background:rgba(5,11,24,.82);border:1px solid rgba(255,255,255,.25);font-size:25px;color:white}
+    .video-meta{padding:16px 18px;display:flex;justify-content:space-between;gap:16px;color:#aebed8;font-size:13px}
+    .grid2,.grid3,.grid4{display:grid;gap:16px}
+    .grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid4{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .card{background:linear-gradient(145deg,rgba(16,32,58,.92),rgba(8,18,36,.92));border:1px solid rgba(142,175,226,.17);border-radius:17px;padding:19px;box-shadow:0 12px 40px rgba(0,0,0,.14)}
+    .card.accent{border-top:3px solid var(--accent,var(--cyan))}
+    .card p{font-size:14px;margin:0}.card ul{margin:8px 0 0;padding-left:18px;color:#b8c7df;line-height:1.7;font-size:14px}
+    .key{display:inline-grid;place-items:center;min-width:36px;height:34px;padding:0 9px;border:1px solid #405475;border-bottom-width:3px;border-radius:8px;background:#111f36;color:white;font:800 14px monospace;box-shadow:0 4px 10px rgba(0,0,0,.22)}
+    .command-list{display:grid;gap:9px}
+    .command-row{display:grid;grid-template-columns:minmax(95px,155px) 1fr;align-items:start;gap:13px;border-bottom:1px solid rgba(145,178,230,.11);padding:8px 0;color:#b9c9e1}
+    .command-row:last-child{border-bottom:0}.command-row code{color:var(--cyan);font-weight:800;font-size:15px}.command-row strong{color:white}
+    .terminal{background:#07101e;border:1px solid #263a5a;border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+    .term-bar{height:38px;background:#0d1a30;border-bottom:1px solid #203553;display:flex;align-items:center;gap:7px;padding:0 13px;color:#778cac;font:11px monospace}
+    .term-dot{width:9px;height:9px;border-radius:50%}.r{background:#ff6b79}.y{background:#ffd166}.g{background:#38e7a5}
+    pre{white-space:pre-wrap;margin:0;padding:18px 20px;color:#d7e1f1;font:500 13px/1.65 "Cascadia Code",Consolas,monospace}
+    .prompt{color:var(--green)}.cmd{color:var(--cyan)}.comment{color:#7185a5}.warn{color:var(--yellow)}
+    .formula{display:flex;align-items:center;justify-content:center;gap:13px;flex-wrap:wrap;margin:20px 0}.formula .box{padding:15px 19px;border-radius:13px;border:1px solid rgba(40,220,255,.25);background:rgba(40,220,255,.06);font:850 18px monospace;color:#dffaff}.plus{color:var(--violet);font-size:25px;font-weight:900}
+    .callout{margin-top:18px;padding:15px 18px;border-left:4px solid var(--accent,var(--cyan));border-radius:0 13px 13px 0;background:rgba(255,255,255,.045);color:#c4d2e7;line-height:1.55}
+    .mode-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.mode{padding:18px;border-radius:15px;border:1px solid rgba(145,178,230,.18);background:rgba(12,26,48,.87);text-align:center}.mode b{display:block;font-size:17px;margin:8px}.mode small{color:#95a9c7;line-height:1.45;display:block}
+    .mode .bubble{width:42px;height:42px;border-radius:12px;margin:auto;display:grid;place-items:center;background:rgba(40,220,255,.09);color:var(--cyan);font:900 17px monospace}
+    .practice{counter-reset:step;display:grid;gap:10px}.practice li{list-style:none;position:relative;padding:13px 16px 13px 52px;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid rgba(145,178,230,.13);color:#c5d3e7;line-height:1.55}.practice li:before{counter-increment:step;content:counter(step);position:absolute;left:14px;top:12px;width:25px;height:25px;border-radius:8px;display:grid;place-items:center;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#07101d;font-weight:900}
+    .cheatsheet{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.cheat{padding:14px;border-radius:13px;background:rgba(255,255,255,.035);border:1px solid rgba(145,178,230,.13)}.cheat b{display:block;color:var(--cyan);font:800 14px monospace;margin-bottom:7px}.cheat span{color:#aebed6;font-size:12px;line-height:1.45;display:block}
+    .quiz{display:grid;gap:12px}.q{padding:16px;border-radius:15px;background:rgba(10,23,44,.92);border:1px solid rgba(145,178,230,.16)}.q.correct{border-color:rgba(56,231,165,.7);background:rgba(56,231,165,.07)}.q.wrong{border-color:rgba(255,113,133,.72);background:rgba(255,113,133,.07)}.q-title{font-weight:750;line-height:1.45;margin-bottom:10px}.options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.options label{display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border:1px solid rgba(145,178,230,.13);border-radius:9px;color:#b8c8e0;font-size:13px;cursor:pointer}.options label:hover{background:rgba(40,220,255,.05)}.feedback{display:none;margin-top:10px;color:#cbd8ea;font-size:12px;line-height:1.5}.q.correct .feedback,.q.wrong .feedback{display:block}.quiz-actions{display:flex;align-items:center;gap:14px;margin-top:15px}.primary{border:0;border-radius:11px;padding:11px 15px;font-weight:850;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#04101b}.score{font-weight:800;color:#dfeaff}
+    .bottom{background:rgba(5,11,24,.9);backdrop-filter:blur(18px);border-top:1px solid rgba(145,178,230,.15);display:grid;grid-template-columns:180px 1fr 180px;align-items:center;padding:0 18px;z-index:20}
+    .nav-btn{height:42px;border-radius:11px;border:1px solid rgba(145,178,230,.18);background:rgba(255,255,255,.035);color:#d3e0f3;font-weight:800}.nav-btn:hover:not(:disabled){border-color:rgba(40,220,255,.45);background:rgba(40,220,255,.08)}.nav-btn:disabled{opacity:.32;cursor:not-allowed}.counter{text-align:center;color:#8094b4;font:750 12px monospace}.counter b{color:#dbe8fa}
+    dialog{border:1px solid rgba(145,178,230,.22);border-radius:18px;background:#0a1529;color:var(--text);box-shadow:0 28px 90px rgba(0,0,0,.6);width:min(760px,calc(100% - 30px));max-height:82vh;padding:0}dialog::backdrop{background:rgba(0,4,12,.72);backdrop-filter:blur(7px)}
+    .modal-head{position:sticky;top:0;background:#0d1a30;border-bottom:1px solid #223652;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}.modal-head h3{margin:0}.close{border:0;background:transparent;color:white;font-size:23px}.modal-body{padding:20px;overflow:auto}.overview{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.overview button{text-align:left;border:1px solid rgba(145,178,230,.13);background:rgba(255,255,255,.025);color:#b9c9e1;border-radius:10px;padding:10px}.overview button:hover{border-color:var(--cyan);color:white}.source-link{display:block;padding:13px;border:1px solid rgba(145,178,230,.13);border-radius:11px;color:#c7d6e9;text-decoration:none;margin-bottom:9px}.source-link:hover{border-color:var(--cyan)}
+    @media(max-width:900px){.brand span:last-child{display:none}.brand{min-width:36px}.top-actions .label{display:none}.slide{padding:24px 20px 38px}.hero-grid,.grid3,.grid4{grid-template-columns:1fr 1fr}.mode-flow{grid-template-columns:1fr 1fr}.cheatsheet{grid-template-columns:repeat(2,1fr)}.bottom{grid-template-columns:120px 1fr 120px}}
+    @media(max-width:620px){.app{grid-template-rows:54px 1fr 62px}.topbar{padding:0 10px;gap:9px}.progress-wrap{display:none}.icon-btn{padding:7px 8px}.slide{padding:20px 14px 32px}.hero-grid,.grid2,.grid3,.grid4,.options{grid-template-columns:1fr}.mode-flow{grid-template-columns:1fr 1fr}.video-card{display:none}.cheatsheet{grid-template-columns:1fr}.bottom{grid-template-columns:92px 1fr 92px;padding:0 9px}.nav-btn{font-size:12px}.command-row{grid-template-columns:96px 1fr}.overview{grid-template-columns:1fr}}
+  .lab-buttons{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0} .lab-buttons+ .terminal{min-height:160px} details{margin-top:18px} summary{cursor:pointer;color:var(--cyan);padding:12px} .slide:not(.active){visibility:hidden} button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--cyan);outline-offset:3px} @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}} </style>
+</head>
+<body>
+  <div class="backdrop"></div>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-icon">|</span><span>PSA • Filtros e Pipelines</span></div>
+      <div class="progress-wrap" aria-label="Progresso"><div class="progress" id="progress"></div></div>
+      <div class="top-actions">
+        <button class="icon-btn" onclick="openDialog('overviewDialog')" title="Visão geral">☷ <span class="label">Visão geral</span></button>
+        <button class="icon-btn" onclick="openDialog('sourcesDialog')" title="Fontes">⌁ <span class="label">Fontes</span></button>
+        <button class="icon-btn" onclick="openDialog('helpDialog')" title="Ajuda">? <span class="label">Ajuda</span></button>
+        <button class="icon-btn" onclick="toggleFullscreen()" title="Tela cheia">⛶</button>
+      </div>
+    </header>
+
+<main class="stage"><section class="slide" data-title="Filtros e pipelines Linux"><div class="slide-inner"><div class="slide-no">PSA • Debian 13 • 01</div><h2>Filtros e pipelines Linux</h2><h1><span class="gradient">Transforme texto<br>em informação.</span></h1><p class="lead">Ordenar, relacionar, numerar e salvar dados com ferramentas pequenas que trabalham juntas.</p><div class="hero-tags"><span class="tag">sort</span><span class="tag">join</span><span class="tag">nl</span><span class="tag">tee</span><span class="tag">pipes</span><span class="tag">Debian 13</span></div><div class="callout">Professor José Raimundo Bezerra de Carvalho • Prática de Sistemas Abertos</div></div></section><section class="slide" data-title="O terminal como oficina de dados"><div class="slide-inner"><div class="slide-no">PSA • Debian 13 • 02</div><h2>O terminal como oficina de dados</h2><div class="grid3"><div class="card accent"><h3>Entrada</h3><p>Um comando lê arquivos ou recebe dados pela entrada padrão (<code>stdin</code>).</p></div><div class="card accent"><h3>Transformação</h3><p>Cada filtro resolve uma tarefa: selecionar, ordenar, combinar ou formatar.</p></div><div class="card accent"><h3>Saída</h3><p>O resultado segue pela saída padrão (<code>stdout</code>). Mensagens de erro usam <code>stderr</code>.</p></div></div><div class="terminal"><pre>grep ERROR logs/acesso.log | sort | nl | tee relatorios/erros.txt</pre></div><div class="callout">O pipe <code>|</code> conecta a saída padrão de um comando à entrada do próximo. Ele não transporta automaticamente as mensagens de erro.</div></div></section><section class="slide" data-title="Pipes e redirecionamentos"><div class="slide-inner"><div class="slide-no">PSA • Debian 13 • 03</div><h2>Pipes e redirecionamentos</h2><div class="grid2"><div class="card accent"><h3><code>|</code> — conectar</h3><p><code>sort dados/numeros.txt | nl</code><br>Entrega as linhas ordenadas ao numerador.</p></div><div class="card accent"><h3><code>&gt;</code> — gravar</h3><p><code>sort dados/numeros.txt &gt; numeros.ord</code><br>Cria ou substitui o arquivo de saída.</p></div><div class="card accent"><h3><code>&gt;&gt;</code> — acrescentar</h3><p><code>echo "Fim" &gt;&gt; relatorios/log.txt</code><br>Preserva o conteúdo anterior e adiciona uma linha.</p></div><div class="card accent"><h3><code>tee</code> — copiar a saída</h3><p><code>sort dados/numeros.txt | tee numeros.ord</code><br>Grava no arquivo e envia os mesmos dados à saída padrão.</p></div></div><div class="callout">Não use <code>sort arquivo &gt; arquivo</code>: o shell esvazia o destino antes de o comando ler a entrada. Use outro arquivo ou <code>sort -o arquivo arquivo</code>.</div></div></section><section class="slide" data-title="sort: escolher o critério"><div class="slide-inner"><div class="slide-no">PSA • Debian 13 • 04</div><h2>sort: escolher o critério</h2><div class="grid2"><div class="card accent"><h3>Texto ou número?</h3><p>Sem opções, compara texto conforme a localidade. <code>-n</code> interpreta números; <code>-r</code> inverte; <code>-nr</code> combina os dois.</p></div><div class="card accent"><h3>Unidades e repetições</h3><p><code>-h</code> interpreta sufixos como K, M e G. <code>-u</code> mantém uma linha por chave de ordenação igual; em linhas completas, elimina repetições exatas.</p></div></div><div class="terminal"><pre>sort dados/numeros.txt
+sort -n dados/numeros.txt
+sort -nr dados/numeros.txt
+sort -nu dados/numeros.txt
+LC_ALL=C sort -h dados/disco.txt</pre></div><div class="callout">Antes de clicar no laboratório: por que o texto “10” aparece antes de “2”? Para reproduzir os exemplos com ponto decimal, usamos <code>LC_ALL=C</code>.</div></div></section><section class="slide" data-title="Laboratório sort"><div class="slide-inner"><div class="slide-no">PSA • Debian 13 • 05</div><h2>Laboratório sort</h2><p>Simulação didática: escolha um comando e compare a entrada com a saída. Execute os comandos reais no Debian durante a atividade.</p><div class="grid2"><div><div class="terminal"><pre>numeros.txt
+10
+2
+8
+1
+2
+15
+3
+
+disco.txt
+2.0G
+850M
+120K
+1.5G
+900K
+45M
+</pre></div></div><div><div class="lab-buttons"><button class="icon-btn" onclick="runLab('sort','text')">sort</button><button class="icon-btn" onclick="runLab('sort','number')">sort -n</button><button class="icon-btn" onclick="runLab('sort','reverse')">sort -nr</button><button class="icon-btn" onclick="runLab('sort','unique')">sort -nu</button><button class="icon-btn" onclick="runLab('sort','human')">sort -h</button></div><div class="terminal"><pre id="sort-output" aria-live="polite">Escolha um comando acima.</pre></div></div></div></div></section><section class="slide" data-title="sort: campos e separadores"><div class="slide-inner"><div class="slide-no">PSA • Debian 13 • 06</div><h2>sort: campos e separadores</h2><div class="grid2"><div class="terminal"><pre>nome:pontos
+ana:10
+bruno:2
+carla:8</pre></div><div class="card accent"><h3>Uma chave bem delimitada</h3><p><code>sort -t : -k2,2n placar.txt</code><br><br><code>-t :</code>: separador dois-pontos.<br><code>-k2,2n</code>: somente campo 2, numérico.<br><code>-k2,2nr</code>: pontuação decrescente.</p></div></div><div class="terminal"><pre>echo &quot;ana:10&quot; &gt; placar.txt
+echo &quot;bruno:2&quot; &gt;&gt; placar.txt
+echo &quot;carla:8&quot; &gt;&gt; placar.txt
+sort -t : -k2,2n placar.txt</pre></div><div class="callout"><code>-k2</code> usa do segundo campo até o fim da linha. <code>-k2,2</code> restringe a chave ao segundo campo. <code>sort -R</code> embaralha grupos de chaves; para embaralhar linhas, explore <code>shuf</code>.</div></div></section><section class="slide" data-title="join: relacionar pela chave"><div class="slide-inner"><div class="slide-no">PSA • Debian 13 • 07</div><h2>join: relacionar pela chave</h2><p class="lead">Dois arquivos descrevem o mesmo identificador de máquina. O <code>join</code> combina as linhas cuja chave coincide.</p><div class="grid2"><div class="terminal"><pre>usuarios.txt
+m_004 carlos.santos
+m_001 ana.paula
+m_006 fernando.lima
+m_003 julia.alves
+m_002 maria.silva
+m_005 lucas.costa
+m_007 bruno.rocha
+</pre></div><div class="terminal"><pre>maquinas.txt
+m_002 192.168.1.50 RH
+m_004 192.168.1.22 Financeiro
+m_001 192.168.1.10 TI
+m_005 192.168.1.88 Backup
+m_003 192.168.1.77 Marketing
+m_006 192.168.1.99 Seguranca
+m_008 192.168.1.120 Reserva
+</pre></div></div><div class="callout">Por padrão, a chave é o primeiro campo; espaços e tabulações separam os campos. Os arquivos precisam estar ordenados pela mesma chave, com localidade consistente.</div></div></section><section class="slide" data-title="Preparar o join corretamente"><div class="slide-inner"><div class="slide-no">PSA • Debian 13 • 08</div><h2>Preparar o join corretamente</h2><div class="terminal"><pre>export LC_ALL=C
+sort -k1b,1 dados/usuarios.txt &gt; usuarios.ord
+sort -k1b,1 dados/maquinas.txt &gt; maquinas.ord
+join usuarios.ord maquinas.ord &gt; resultado.txt
+cat resultado.txt</pre></div><div class="grid3"><div class="card accent"><h3>Correspondências</h3><p><code>join</code> mostra os pares encontrados e coloca a chave uma única vez na saída.</p></div><div class="card accent"><h3>Incluir sem par</h3><p><code>join -a 1</code> também inclui as linhas do primeiro arquivo sem correspondência.</p></div><div class="card accent"><h3>Somente sem par</h3><p><code>join -v 1</code> mostra apenas as linhas do primeiro arquivo sem correspondência.</p></div></div><div class="callout">Aqui, <code>m_007</code> existe só em usuários e <code>m_008</code> só em máquinas. Use <code>-v 2</code> para encontrar a máquina sem usuário.</div></div></section><section class="slide" data-title="Laboratório join"><div class="slide-inner"><div class="slide-no">PSA • Debian 13 • 09</div><h2>Laboratório join</h2><p>Simulação didática: escolha um comando e compare a entrada com a saída. Execute os comandos reais no Debian durante a atividade.</p><div class="grid2"><div><div class="terminal"><pre>Entradas: usuarios.ord e maquinas.ord
+Ordenadas pelo primeiro campo.
+
+m_007 bruno.rocha → só no arquivo 1
+m_008 192.168.1.120 Reserva → só no arquivo 2</pre></div></div><div><div class="lab-buttons"><button class="icon-btn" onclick="runLab('join','match')">join</button><button class="icon-btn" onclick="runLab('join','all')">join -a 1</button><button class="icon-btn" onclick="runLab('join','missing')">join -v 1</button><button class="icon-btn" onclick="runLab('join','machine')">join -v 2</button></div><div class="terminal"><pre id="join-output" aria-live="polite">Escolha um comando acima.</pre></div></div></div><div class="callout">Chaves em outras posições: <code>join -1 2 -2 1 arquivo1 arquivo2</code>. Ordene o primeiro arquivo pelo campo 2 e o segundo pelo campo 1 antes de combinar.</div></div></section><section class="slide" data-title="nl: números que ajudam a ler"><div class="slide-inner"><div class="slide-no">PSA • Debian 13 • 10</div><h2>nl: números que ajudam a ler</h2><div class="grid3"><div class="card accent"><h3>O padrão</h3><p><code>nl</code> numera linhas não vazias. As linhas vazias permanecem sem número.</p></div><div class="card accent"><h3>Todas as linhas</h3><p><code>nl -b a</code> inclui as linhas vazias na contagem.</p></div><div class="card accent"><h3>Formato</h3><p><code>-n rz</code> alinha à direita com zeros. <code>-w 3</code> define largura 3; <code>-s ": "</code> define o separador.</p></div></div><p>Simulação didática: escolha um comando e compare a entrada com a saída. Execute os comandos reais no Debian durante a atividade.</p><div class="grid2"><div><div class="terminal"><pre>#!/bin/bash
+
+echo &quot;Iniciando&quot;
+
+echo &quot;Concluido&quot;
+</pre></div></div><div><div class="lab-buttons"><button class="icon-btn" onclick="runLab('nl','default')">nl</button><button class="icon-btn" onclick="runLab('nl','all')">nl -b a</button><button class="icon-btn" onclick="runLab('nl','zeros')">nl -b a -n rz -w 3</button><button class="icon-btn" onclick="runLab('nl','custom')">nl -b a -w 3 -s &quot;: &quot;</button></div><div class="terminal"><pre id="nl-output" aria-live="polite">Escolha um comando acima.</pre></div></div></div><div class="callout">A largura padrão já é 6. <code>nl -w 6</code> sozinho não acrescenta zeros; para isso, use <code>-n rz</code>.</div></div></section><section class="slide" data-title="tee: acompanhar e registrar"><div class="slide-inner"><div class="slide-no">PSA • Debian 13 • 11</div><h2>tee: acompanhar e registrar</h2><div class="grid2"><div class="card accent"><h3>Gravar</h3><p><code>echo "Inicio" | tee relatorios/log.txt</code><br>Mostra “Inicio” e substitui o conteúdo do arquivo.</p></div><div class="card accent"><h3>Acrescentar</h3><p><code>echo "Fim" | tee -a relatorios/log.txt</code><br>Mostra “Fim” e preserva as linhas anteriores.</p></div></div><div class="lab-buttons"><button class="icon-btn" onclick="teeDemo(false)">Gravar Inicio</button><button class="icon-btn" onclick="teeDemo(true)">Acrescentar Fim</button><button class="icon-btn" onclick="resetTee()">Reiniciar</button></div><div class="grid2"><div class="terminal"><pre id="tee-screen" aria-live="polite">Saída padrão: aguardando comando.</pre></div><div class="terminal"><pre id="tee-file" aria-live="polite">Arquivo: ainda não criado.</pre></div></div><div class="callout">Simulação com estado: clique em “Acrescentar” várias vezes, depois em “Gravar”, e observe o conteúdo do arquivo.</div></div></section><section class="slide" data-title="tee, sudo e o shell"><div class="slide-inner"><div class="slide-no">PSA • Debian 13 • 12</div><h2>tee, sudo e o shell</h2><div class="terminal"><pre>echo &quot;teste&quot; | sudo tee /etc/teste.conf
+# Exemplo conceitual: grava com privilégios administrativos.</pre></div><div class="grid2"><div class="card accent"><h3>Quem grava com &gt;?</h3><p>Em <code>sudo echo "teste" &gt; /etc/teste.conf</code>, o redirecionamento é feito pelo shell atual. Ele pode não ter permissão, mesmo quando o comando usa sudo.</p></div><div class="card accent"><h3>Quem grava com tee?</h3><p>Em <code>echo "teste" | sudo tee /etc/teste.conf</code>, o processo tee abre o arquivo com os privilégios concedidos por sudo.</p></div></div><div class="callout">Na atividade, trabalharemos apenas na pasta criada para o laboratório. Para salvar em mais de um destino: <code>echo "teste" | tee copia1.txt copia2.txt</code>.</div></div></section><section class="slide" data-title="Pipeline: do cadastro ao relatório"><div class="slide-inner"><div class="slide-no">PSA • Debian 13 • 13</div><h2>Pipeline: do cadastro ao relatório</h2><div class="terminal"><pre>export LC_ALL=C
+sort -k1b,1 dados/usuarios.txt &gt; usuarios.ord
+sort -k1b,1 dados/maquinas.txt &gt; maquinas.ord
+join usuarios.ord maquinas.ord |
+  nl -b a -n rz -w 3 |
+  tee relatorios/relatorio_final.txt</pre></div><div class="lab-buttons"><button class="icon-btn" onclick="runLab('pipeline','join')">1. Relacionar</button><button class="icon-btn" onclick="runLab('pipeline','nl')">2. Numerar</button><button class="icon-btn" onclick="runLab('pipeline','tee')">3. Registrar</button></div><div class="terminal"><pre id="pipeline-output" aria-live="polite">Escolha uma etapa para ver a transformação dos dados.</pre></div><div class="callout">As duas ordenações preparam as entradas. O pipeline começa no join; o hífen em <code>join - maquinas.ord</code> permite receber o primeiro arquivo pela entrada padrão.</div></div></section><section class="slide" data-title="Preparação do laboratório"><div class="slide-inner"><div class="slide-no">PSA • Debian 13 • 14</div><h2>Preparação do laboratório</h2><p>Copie o script, salve como <code>setup_pipeline.sh</code> e execute <code>bash setup_pipeline.sh</code>. Depois copie o comando <code>cd</code> exibido pelo script.</p><div class="lab-buttons"><button class="primary" onclick="copyBlock('setup-code',this)">Copiar script</button><button class="icon-btn" onclick="downloadSetup()">Baixar setup_pipeline.sh</button></div><div class="terminal"><pre id="setup-code">#!/bin/bash
+set -e
+LAB_DIR=$(mktemp -d &quot;$HOME/lab_pipeline.XXXXXX&quot;)
+mkdir -p &quot;$LAB_DIR/dados&quot; &quot;$LAB_DIR/logs&quot; &quot;$LAB_DIR/relatorios&quot;
+cd &quot;$LAB_DIR&quot;
+
+{
+  echo &#x27;m_004 carlos.santos&#x27;
+  echo &#x27;m_001 ana.paula&#x27;
+  echo &#x27;m_006 fernando.lima&#x27;
+  echo &#x27;m_003 julia.alves&#x27;
+  echo &#x27;m_002 maria.silva&#x27;
+  echo &#x27;m_005 lucas.costa&#x27;
+  echo &#x27;m_007 bruno.rocha&#x27;
+} &gt; dados/usuarios.txt
+
+{
+  echo &#x27;m_002 192.168.1.50 RH&#x27;
+  echo &#x27;m_004 192.168.1.22 Financeiro&#x27;
+  echo &#x27;m_001 192.168.1.10 TI&#x27;
+  echo &#x27;m_005 192.168.1.88 Backup&#x27;
+  echo &#x27;m_003 192.168.1.77 Marketing&#x27;
+  echo &#x27;m_006 192.168.1.99 Seguranca&#x27;
+  echo &#x27;m_008 192.168.1.120 Reserva&#x27;
+} &gt; dados/maquinas.txt
+
+{
+  echo &#x27;10&#x27;
+  echo &#x27;2&#x27;
+  echo &#x27;8&#x27;
+  echo &#x27;1&#x27;
+  echo &#x27;2&#x27;
+  echo &#x27;15&#x27;
+  echo &#x27;3&#x27;
+} &gt; dados/numeros.txt
+
+{
+  echo &#x27;2.0G&#x27;
+  echo &#x27;850M&#x27;
+  echo &#x27;120K&#x27;
+  echo &#x27;1.5G&#x27;
+  echo &#x27;900K&#x27;
+  echo &#x27;45M&#x27;
+} &gt; dados/disco.txt
+
+{
+  echo &#x27;#!/bin/bash&#x27;
+  echo &#x27;&#x27;
+  echo &#x27;echo &quot;Iniciando&quot;&#x27;
+  echo &#x27;&#x27;
+  echo &#x27;echo &quot;Concluido&quot;&#x27;
+} &gt; dados/exemplo.sh
+
+{
+  echo &#x27;2026-10-05 08:00:01 INFO Usuario ana.paula logou no sistema&#x27;
+  echo &#x27;2026-10-05 08:03:15 WARN Tentativa de acesso invalido&#x27;
+  echo &#x27;2026-10-05 08:10:55 ERROR Falha ao abrir banco de dados&#x27;
+  echo &#x27;2026-10-05 08:11:02 INFO Usuario maria.silva acessou RH&#x27;
+  echo &#x27;2026-10-05 08:15:44 ERROR Permissao negada&#x27;
+  echo &#x27;2026-10-05 08:17:10 INFO Backup executado&#x27;
+  echo &#x27;2026-10-05 08:20:33 WARN Uso alto de memoria&#x27;
+  echo &#x27;2026-10-05 08:22:19 INFO Usuario julia.alves alterou relatorio&#x27;
+  echo &#x27;2026-10-05 08:30:10 ERROR Servidor indisponivel&#x27;
+} &gt; logs/acesso.log
+
+echo &quot;Laboratorio criado em: $LAB_DIR&quot;
+echo &quot;Para entrar, execute: cd \&quot;$LAB_DIR\&quot;&quot;
+</pre></div><div class="callout">Cada execução cria uma pasta nova em seu diretório pessoal. Não exige root e não remove laboratórios anteriores. Todos os dados são criados com <code>echo</code>.</div></div></section><section class="slide" data-title="Atividade: investigar e explicar"><div class="slide-inner"><div class="slide-no">PSA • Debian 13 • 15</div><h2>Atividade: investigar e explicar</h2><p class="lead">30–40 minutos • Em duplas: uma pessoa executa, a outra prevê e confere. Troquem de função na metade.</p><div class="lab-buttons"><button class="primary" onclick="copyBlock('activity-code',this)">Copiar atividade para o Classroom</button></div><div class="terminal"><pre id="activity-code">ATIVIDADE — FILTROS E PIPELINES (DEBIAN 13)
+
+1. Execute o script de preparação e entre na pasta indicada.
+2. Compare sort, sort -n, sort -nr e sort -nu em dados/numeros.txt.
+   Explique por que 10 aparece antes de 2 na ordenação textual.
+3. Ordene dados/disco.txt usando LC_ALL=C sort -h.
+4. Ordene os dois cadastros pelo campo 1 e crie resultado.txt com join.
+5. Identifique o usuário sem máquina e a máquina sem usuário.
+   Compare join, join -a 1, join -v 1 e join -v 2.
+6. Compare nl e nl -b a em dados/exemplo.sh.
+   Mostre a diferença com nl -b a -n rz -w 3.
+7. Grave uma linha com tee e acrescente outra com tee -a.
+   Execute cat no destino e explique a diferença.
+8. Gere relatorios/relatorio_final.txt com join | nl | tee.
+9. Gere relatorios/erros.txt contendo somente as linhas ERROR,
+   ordenadas e numeradas. Não altere o log original.
+
+ENTREGA: os dois relatórios, os comandos executados e respostas
+curtas às perguntas. Confira: 6 pares, 1 usuário sem máquina,
+1 máquina sem usuário e 3 eventos ERROR.
+</pre></div></div></section><section class="slide" data-title="Conferência e discussão"><div class="slide-inner"><div class="slide-no">PSA • Debian 13 • 16</div><h2>Conferência e discussão</h2><div class="grid3"><div class="card accent"><h3>Cadastro</h3><p>6 pares no relatório.<br>Sem máquina: <code>m_007</code>.<br>Sem usuário: <code>m_008</code>.</p></div><div class="card accent"><h3>Log</h3><p>3 eventos ERROR.<br>O log original permanece com 9 linhas.</p></div><div class="card accent"><h3>Explique a decisão</h3><p>Quando usar <code>-n</code> ou <code>-h</code>?<br>O que muda em <code>-a 1</code>?<br>Por que usar <code>tee -a</code>?</p></div></div><details><summary>Revelar uma solução possível</summary><div class="terminal"><pre>export LC_ALL=C
+sort -k1b,1 dados/usuarios.txt &gt; usuarios.ord
+sort -k1b,1 dados/maquinas.txt &gt; maquinas.ord
+join usuarios.ord maquinas.ord &gt; resultado.txt
+join -v 1 usuarios.ord maquinas.ord
+join -v 2 usuarios.ord maquinas.ord
+nl -b a -n rz -w 3 resultado.txt | tee relatorios/relatorio_final.txt
+grep &#x27; ERROR &#x27; logs/acesso.log | sort | nl -b a -n rz -w 3 | tee relatorios/erros.txt
+</pre></div></details><div class="callout">Extensão: registre apenas WARN e ERROR com <code>grep -E " (WARN|ERROR) "</code>. Compare o resultado com o relatório que contém somente erros.</div></div></section><section class="slide" data-title="Ferramentas pequenas, resultados maiores"><div class="slide-inner"><div class="slide-no">PSA • Debian 13 • 17</div><h2>Ferramentas pequenas, resultados maiores</h2><h1><span class="gradient">Leia a entrada.<br>Escolha o filtro.<br>Confira a saída.</span></h1><div class="grid4"><div class="card accent"><h3>sort</h3><p>Organiza linhas por um critério.</p></div><div class="card accent"><h3>join</h3><p>Relaciona dados por uma chave.</p></div><div class="card accent"><h3>nl</h3><p>Acrescenta números às linhas.</p></div><div class="card accent"><h3>tee</h3><p>Copia o fluxo para arquivos e saída.</p></div></div><div class="callout">Consulte no Debian: <code>man sort</code>, <code>man join</code>, <code>man nl</code> e <code>man tee</code>. Volte à visão geral para repetir os laboratórios.</div></div></section></main>    <footer class="bottom"><button class="nav-btn" id="prev" onclick="changeSlide(-1)">← Anterior</button><div class="counter"><b id="current">01</b> / <span id="total">22</span> • <span id="slideTitle">Editor Vim</span></div><button class="nav-btn" id="next" onclick="changeSlide(1)">Próximo →</button></footer>
+  </div>
+
+  <dialog id="overviewDialog"><div class="modal-head"><h3>Visão geral</h3><button class="close" onclick="closeDialog('overviewDialog')">×</button></div><div class="modal-body"><div class="overview" id="overview"></div></div></dialog>
+  <dialog id="sourcesDialog"><div class="modal-head"><h3>Fontes e continuidade</h3><button class="close" onclick="closeDialog('sourcesDialog')">×</button></div><div class="modal-body"><a class="source-link" href="https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html" target="_blank" rel="noopener">GNU Coreutils — sort ↗</a><a class="source-link" href="https://www.gnu.org/software/coreutils/manual/html_node/Sorting-files-for-join.html" target="_blank" rel="noopener">GNU Coreutils — Preparação para join ↗</a><a class="source-link" href="https://www.gnu.org/software/coreutils/manual/html_node/join-invocation.html" target="_blank" rel="noopener">GNU Coreutils — join ↗</a><a class="source-link" href="https://www.gnu.org/software/coreutils/manual/html_node/nl-invocation.html" target="_blank" rel="noopener">GNU Coreutils — nl ↗</a><a class="source-link" href="https://www.gnu.org/software/coreutils/manual/html_node/tee-invocation.html" target="_blank" rel="noopener">GNU Coreutils — tee ↗</a><div class="source-link">Adaptado do material Filtros enviado pelo professor. Saídas conferidas com GNU Coreutils; comandos para execução no Debian 13.</div><a class="source-link" href="index.html">← Voltar ao portal PSA</a></div></dialog>
+  <dialog id="helpDialog"><div class="modal-head"><h3>Como usar a apresentação</h3><button class="close" onclick="closeDialog('helpDialog')">×</button></div><div class="modal-body"><div class="command-list"><div class="command-row"><code>→ / Espaço</code><span>Próximo slide</span></div><div class="command-row"><code>←</code><span>Slide anterior</span></div><div class="command-row"><code>Home / End</code><span>Primeiro / último slide</span></div><div class="command-row"><code>F</code><span>Tela cheia</span></div><div class="command-row"><code>Esc</code><span>Fecha janelas ou sai da tela cheia</span></div></div></div></dialog>
+
+  <script>
+    const slides=[...document.querySelectorAll('.slide')];
+    let index=0;
+    const current=document.getElementById('current'), total=document.getElementById('total'), slideTitle=document.getElementById('slideTitle'), progress=document.getElementById('progress'), prev=document.getElementById('prev'), next=document.getElementById('next'), overview=document.getElementById('overview');
+    total.textContent=String(slides.length).padStart(2,'0');
+    slides.forEach((s,i)=>{const b=document.createElement('button');b.textContent=`${String(i+1).padStart(2,'0')} · ${s.dataset.title}`;b.onclick=()=>{goTo(i);closeDialog('overviewDialog')};overview.appendChild(b)});
+    function render(){slides.forEach((s,i)=>s.classList.toggle('active',i===index));current.textContent=String(index+1).padStart(2,'0');slideTitle.textContent=slides[index].dataset.title;progress.style.width=`${((index+1)/slides.length)*100}%`;prev.disabled=index===0;next.disabled=index===slides.length-1;slides[index].scrollTop=0;document.title=`${slides[index].dataset.title} — PSA`}
+    function goTo(i){index=Math.max(0,Math.min(slides.length-1,i));render()}
+    function changeSlide(delta){goTo(index+delta)}
+    function openDialog(id){document.getElementById(id).showModal()}
+    function closeDialog(id){document.getElementById(id).close()}
+    function toggleFullscreen(){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}
+    document.addEventListener('keydown',e=>{if(document.querySelector('dialog[open]')||e.target.closest('button,a,input,textarea,select,summary'))return;if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();changeSlide(1)}if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();changeSlide(-1)}if(e.key==='Home')goTo(0);if(e.key==='End')goTo(slides.length-1);if(e.key.toLowerCase()==='f')toggleFullscreen()});
+    function gradeQuiz(){let hits=0;document.querySelectorAll('.q').forEach((q,i)=>{q.classList.remove('correct','wrong');const picked=q.querySelector(`input[name="q${i+1}"]:checked`);const ok=picked&&picked.value===q.dataset.answer;q.classList.add(ok?'correct':'wrong');if(ok)hits++;q.querySelector('.feedback').innerHTML=`<strong>${ok?'Correto.':'Revise.'}</strong> ${q.dataset.explanation}`});document.getElementById('score').textContent=`Resultado: ${hits}/10`}
+    function resetQuiz(){document.querySelectorAll('.q').forEach(q=>{q.classList.remove('correct','wrong');q.querySelectorAll('input').forEach(i=>i.checked=false);q.querySelector('.feedback').textContent=''});document.getElementById('score').textContent=''}
+
+const labOutputs={"sort": {"text": "$ LC_ALL=C sort dados/numeros.txt\n1\n10\n15\n2\n2\n3\n8\n", "number": "$ LC_ALL=C sort -n dados/numeros.txt\n1\n2\n2\n3\n8\n10\n15\n", "reverse": "$ LC_ALL=C sort -nr dados/numeros.txt\n15\n10\n8\n3\n2\n2\n1\n", "unique": "$ LC_ALL=C sort -nu dados/numeros.txt\n1\n2\n3\n8\n10\n15\n", "human": "$ LC_ALL=C sort -h dados/disco.txt\n120K\n900K\n45M\n850M\n1.5G\n2.0G\n"}, "join": {"match": "$ join usuarios.ord maquinas.ord\nm_001 ana.paula 192.168.1.10 TI\nm_002 maria.silva 192.168.1.50 RH\nm_003 julia.alves 192.168.1.77 Marketing\nm_004 carlos.santos 192.168.1.22 Financeiro\nm_005 lucas.costa 192.168.1.88 Backup\nm_006 fernando.lima 192.168.1.99 Seguranca\n", "all": "$ join -a 1 usuarios.ord maquinas.ord\nm_001 ana.paula 192.168.1.10 TI\nm_002 maria.silva 192.168.1.50 RH\nm_003 julia.alves 192.168.1.77 Marketing\nm_004 carlos.santos 192.168.1.22 Financeiro\nm_005 lucas.costa 192.168.1.88 Backup\nm_006 fernando.lima 192.168.1.99 Seguranca\nm_007 bruno.rocha\n", "missing": "$ join -v 1 usuarios.ord maquinas.ord\nm_007 bruno.rocha\n", "machine": "$ join -v 2 usuarios.ord maquinas.ord\nm_008 192.168.1.120 Reserva\n"}, "nl": {"default": "$ nl  dados/exemplo.sh\n     1\t#!/bin/bash\n       \n     2\techo \"Iniciando\"\n       \n     3\techo \"Concluido\"\n", "all": "$ nl -b a dados/exemplo.sh\n     1\t#!/bin/bash\n     2\t\n     3\techo \"Iniciando\"\n     4\t\n     5\techo \"Concluido\"\n", "zeros": "$ nl -b a -n rz -w 3 dados/exemplo.sh\n001\t#!/bin/bash\n002\t\n003\techo \"Iniciando\"\n004\t\n005\techo \"Concluido\"\n", "custom": "$ nl -b a -w 3 -s :  dados/exemplo.sh\n  1: #!/bin/bash\n  2: \n  3: echo \"Iniciando\"\n  4: \n  5: echo \"Concluido\"\n"}, "pipeline": {"join": "m_001 ana.paula 192.168.1.10 TI\nm_002 maria.silva 192.168.1.50 RH\nm_003 julia.alves 192.168.1.77 Marketing\nm_004 carlos.santos 192.168.1.22 Financeiro\nm_005 lucas.costa 192.168.1.88 Backup\nm_006 fernando.lima 192.168.1.99 Seguranca\n", "nl": "001\tm_001 ana.paula 192.168.1.10 TI\n002\tm_002 maria.silva 192.168.1.50 RH\n003\tm_003 julia.alves 192.168.1.77 Marketing\n004\tm_004 carlos.santos 192.168.1.22 Financeiro\n005\tm_005 lucas.costa 192.168.1.88 Backup\n006\tm_006 fernando.lima 192.168.1.99 Seguranca\n", "tee": "Saída padrão e conteúdo de relatorios/relatorio_final.txt:\n\n001\tm_001 ana.paula 192.168.1.10 TI\n002\tm_002 maria.silva 192.168.1.50 RH\n003\tm_003 julia.alves 192.168.1.77 Marketing\n004\tm_004 carlos.santos 192.168.1.22 Financeiro\n005\tm_005 lucas.costa 192.168.1.88 Backup\n006\tm_006 fernando.lima 192.168.1.99 Seguranca\n"}};
+function runLab(name,key){document.getElementById(name+'-output').textContent=labOutputs[name][key];}
+let teeLines=[];
+function teeDemo(append){const line=append?'Fim':'Inicio';teeLines=append?[...teeLines,line]:[line];document.getElementById('tee-screen').textContent='Saída padrão:\n'+line;document.getElementById('tee-file').textContent='relatorios/log.txt:\n'+teeLines.join('\n');}
+function resetTee(){teeLines=[];document.getElementById('tee-screen').textContent='Saída padrão: aguardando comando.';document.getElementById('tee-file').textContent='Arquivo: ainda não criado.';}
+async function copyBlock(id,button){const text=document.getElementById(id).textContent;try{await navigator.clipboard.writeText(text);button.textContent='Copiado!';}catch(e){const range=document.createRange();range.selectNodeContents(document.getElementById(id));const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);button.textContent='Texto selecionado: use Ctrl+C';}}
+function downloadSetup(){const blob=new Blob([document.getElementById('setup-code').textContent],{type:'text/x-shellscript;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='setup_pipeline.sh';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+
+    render();
+  </script>
+</body>
+</html>
