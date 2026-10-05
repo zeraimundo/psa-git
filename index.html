@@ -83,7 +83,7 @@
     .topics span{font:500 11px "Fira Code";padding:6px 8px;border-radius:8px;color:#a9b8d0;background:rgba(255,255,255,.035);border:1px solid rgba(140,170,220,.11)}
     .open{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:white}
     .open b{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.06);color:var(--accent)}
-    .timeline{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:30px}
+    .timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:30px}
     .step{padding:15px 14px;border-top:2px solid var(--accent);background:rgba(255,255,255,.025);border-radius:0 0 12px 12px}
     .step small{font:700 10px "Fira Code";color:var(--accent);text-transform:uppercase}
     .step strong{display:block;margin-top:7px;font-size:13px}
@@ -111,7 +111,7 @@
       <div>
         <div class="eyebrow"><span class="dot"></span> Portal da disciplina • IFPB</div>
         <h1><span class="grad">Prática de<br>Sistemas Abertos</span></h1>
-        <p>Um ponto único para acessar os materiais interativos da disciplina. Começamos pelos fundamentos do Linux com o Cisco Linux Unhatched, avançamos pelo editor Vim e chegamos à virtualização, aos hypervisors e à Infraestrutura como Código.</p>
+        <p>Um ponto único para acessar os materiais interativos da disciplina. Começamos pelos fundamentos do Linux com o Cisco Linux Unhatched, avançamos pelo editor Vim, pelos filtros e pipelines e chegamos à virtualização, aos hypervisors e à Infraestrutura como Código.</p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="#materiais">Explorar materiais <span>↓</span></a>
           <a class="btn btn-secondary" href="linux-unhatched-parte-1.html">Começar pelo Linux Unhatched</a>
@@ -129,7 +129,8 @@ estudante
 <span class="v">02-permissoes-arquivos</span>
 <span class="v">03-admin-avancada</span>
 <span class="v">04-editor-vim</span>
-<span class="v">05-virtualizacao-iac</span>
+<span class="v">05-filtros-pipelines</span>
+<span class="v">06-virtualizacao-iac</span>
 
 <span class="comment"># aprender → praticar → automatizar</span>
 <span class="p">sysadmin@lab:~$</span> <span class="c">_</span></pre>
@@ -143,7 +144,7 @@ estudante
           <h2>Materiais da disciplina</h2>
           <p>Apresentações HTML interativas organizadas em uma sequência progressiva. Cada card abre o material completo em uma nova página.</p>
         </div>
-        <div class="count">05 MATERIAIS</div>
+        <div class="count">06 MATERIAIS</div>
       </div>
 
       <div class="grid">
@@ -180,6 +181,14 @@ estudante
           <span class="open">Abrir apresentação <b>↗</b></span>
         </a>
 
+        <a class="card" href="filtros-pipelines.html" style="--accent:#24d9ff">
+          <div class="card-top"><span class="module">Ferramentas de Terminal</span><span class="badge">Debian 13 • Prática</span></div>
+          <h3>Filtros e Pipelines Linux</h3>
+          <p>Ordenação, combinação de cadastros, numeração e registro de dados. Laboratórios interativos, preparação com echo e atividade prática com relatórios.</p>
+          <div class="topics"><span>sort</span><span>join</span><span>nl</span><span>tee</span><span>pipes</span><span>laboratório</span></div>
+          <span class="open">Abrir apresentação <b>↗</b></span>
+        </a>
+
         <a class="card" href="virtualizacao-iac.html" style="--accent:#9868ff">
           <div class="card-top"><span class="module">Infraestrutura</span><span class="badge">Virtualização + IaC</span></div>
           <h3>Virtualização e Infraestrutura como Código</h3>
@@ -194,7 +203,7 @@ estudante
       <div class="section-head">
         <div>
           <h2>Trilha sugerida</h2>
-          <p>A ordem organiza a evolução do aluno: do uso básico do terminal à administração com Vim e, depois, à infraestrutura moderna.</p>
+          <p>A ordem organiza a evolução do aluno: do uso básico do terminal à edição com Vim, ao processamento de dados com filtros e, depois, à infraestrutura moderna.</p>
         </div>
       </div>
       <div class="timeline">
@@ -202,7 +211,8 @@ estudante
         <div class="step" style="--accent:#4c7dff"><small>Etapa 02</small><strong>Dominar arquivos e permissões</strong></div>
         <div class="step" style="--accent:#36e7a0"><small>Etapa 03</small><strong>Administrar o sistema</strong></div>
         <div class="step" style="--accent:#ffd166"><small>Etapa 04</small><strong>Editar e automatizar com Vim</strong></div>
-        <div class="step" style="--accent:#9868ff"><small>Etapa 05</small><strong>Virtualizar e automatizar</strong></div>
+        <div class="step" style="--accent:#24d9ff"><small>Etapa 05</small><strong>Processar dados com filtros e pipelines</strong></div>
+        <div class="step" style="--accent:#9868ff"><small>Etapa 06</small><strong>Virtualizar e automatizar</strong></div>
       </div>
       <div class="note"><strong>Portal evolutivo:</strong> novos materiais podem ser adicionados aqui ao longo do semestre mantendo o mesmo padrão visual e a mesma navegação.</div>
     </section>
