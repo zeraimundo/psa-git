@@ -306,5 +306,6 @@ aluno       79    69  0 19:16 pts/0    00:00:00 -bash</span></pre></div>
     function showResult(){let score=questions.reduce((s,q,i)=>s+(answers[i]===q.a?1:0),0);const box=document.getElementById('quizResult');box.style.display='block';box.className='callout '+(score>=8?'':'warnBox');box.innerHTML=`<div class="resultBadge">${score}/${questions.length}</div><b>${score===10?'Excelente!':score>=8?'Muito bom!':'Vamos revisar mais um pouco.'}</b><br>Você concluiu o exame final. ${score<8?'Revise grep, APT, redirecionamento e vi/vim antes de tentar novamente.':'Ótimo domínio dos comandos essenciais.'}`;}
     buildDots();buildOverview();renderQuiz();update();
   </script>
+<script src="command-help.v1.js?v=20261017" defer></script>
 </body>
 </html>
