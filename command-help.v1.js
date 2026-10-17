@@ -6,6 +6,7 @@
  'use strict';
  if (window.commandHelpInstalled) return;
  window.commandHelpInstalled = true;
+ document.documentElement.dataset.commandHelpVersion = "20261017.2";
  const commands = {
  sort:'Ordena linhas de texto. As opções escolhem o critério e a direção da ordenação.',
  join:'Combina linhas de dois arquivos por um campo comum. Ordene previamente ambos pela chave usada.',
@@ -243,6 +244,6 @@
  const bar=document.querySelector('.top-actions,.topbar .actions,.toolbar .actions');if(bar)bar.append(help);else {help.style.cssText='position:fixed;right:12px;bottom:80px;z-index:1000';document.body.append(help);}
  scan(document.body);
  let pending=new Set(),scheduled=false;
- const observer=new MutationObserver(records=>{for(const r of records){const el=r.target.nodeType===1?r.target:r.target.parentElement;if(!el||el.closest('#command-help-bubble,[data-command-help]'))continue;const root=el.closest(selector);if(root)pending.add(root);for(const n of r.addedNodes)if(n.nodeType===1&&!n.matches('[data-command-help]'))pending.add(n);}if(pending.size&&!scheduled){scheduled=true;queueMicrotask(()=>{observer.disconnect();for(const el of pending)if(el.isConnected)scan(el);pending.clear();scheduled=false;observer.observe(document.body,{childList:true,subtree:true,characterData:true});});}});
+ const observer=new MutationObserver(records=>{for(const r of records){const el=r.target.nodeType===1?r.target:r.target.parentElement;if(!el||el.closest('#command-help-bubble,[data-command-help]'))continue;const root=el.closest(selector);if(root)pending.add(root);for(const n of r.addedNodes){if(n.nodeType===1&&!n.matches('[data-command-help]'))pending.add(n);else if(n.nodeType===3&&n.parentElement?.closest(selector))pending.add(n.parentElement.closest(selector));}}if(pending.size&&!scheduled){scheduled=true;queueMicrotask(()=>{observer.disconnect();for(const el of pending)if(el.isConnected)scan(el);pending.clear();scheduled=false;observer.observe(document.body,{childList:true,subtree:true,characterData:true});});}});
  observer.observe(document.body,{childList:true,subtree:true,characterData:true});
 })();
