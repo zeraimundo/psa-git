@@ -332,6 +332,6 @@
     function showResult(){let score=answers.reduce((a,v,i)=>a+(v===questions[i][2]?1:0),0);let msg=score>=9?'Excelente! Você dominou os fundamentos.':score>=6?'Bom trabalho! Revise os pontos marcados e pratique mais um pouco.':'Continue praticando. O terminal fica mais fácil com repetição.';document.getElementById('quizResult').style.display='block';document.getElementById('quizResult').innerHTML=`<div class="resultBadge grad">${score}/${questions.length}</div><p class="lead" style="margin:10px auto">${msg}</p><button class="chip active" onclick="answers=Array(questions.length).fill(null);qIndex=0;renderQ()">Refazer quiz</button>`}
     renderQ();update();
   </script>
-<script src="command-help.v1.js?v=20261017" defer></script>
+<script src="command-help.v1.js?v=20261017.2" defer></script>
 </body>
 </html>
