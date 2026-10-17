@@ -162,7 +162,7 @@
   const heading=((card?.querySelector('h3,h4')?.textContent||'')+' '+title).toLowerCase();
   let cmd=Object.keys(commands).find(c=>new RegExp('(^|[^a-z])'+c.replace('-','\\-')+'([^a-z]|$)').test(heading))||'';
   if(!cmd&&card){const before=card.textContent.split(root.textContent)[0];const found=[...before.matchAll(/\b(sort|join|nl|tee|ls|cat|head|tail|rm|useradd|userdel|dpkg|pacman|dnf|apt)\b/g)];if(found.length)cmd=found[found.length-1][1];}
-  return {cmd,vimContext};
+  return {cmd,vimContext,title};
  }
  function ranges(text,ctx,inline){
   let result=[],offset=0,carry='';
@@ -185,7 +185,10 @@
     else if(/^[A-Za-z_][A-Za-z_0-9]*=/.test(t)&&(!cmd||cmd==='export')){help=t.startsWith('LC_ALL=')?'Définit la localité'.replace('Définit la localité','Define a localidade de todos os critérios: LC_ALL=C usa regras previsíveis para ordenação e números.'):'Atribui um valor à variável '+t.split('=')[0]+'.';active=true;}
     else if(active||inline){
      const c=cmd||ctx.cmd;
-     if(ctx.vimContext&&!cmd&&(help=vimHelp(t))){}
+     if(ctx.vimContext&&!cmd&&lex[i-1]?.[0]==='Ctrl-w')help=t==='w'?'Vim: após Ctrl-w, w passa à próxima janela.':'Vim: após Ctrl-w, h/j/k/l escolhem a janela à esquerda/abaixo/acima/à direita; as setas também podem selecionar a direção.';
+     else if(ctx.vimContext&&!cmd&&lex[i-1]?.[0]===':r'&&t.startsWith('!'))help='Vim: executa '+t.slice(1)+' no shell e insere a saída abaixo do cursor.';
+     else if(ctx.vimContext&&!cmd&&/substitui/i.test(ctx.title)&&['y','n','a','q'].includes(t))help=({y:'Confirma esta substituição.',n:'Pula esta ocorrência.',a:'Confirma todas as substituições restantes.',q:'Encerra a sequência de substituições.'})[t];
+     else if(ctx.vimContext&&!cmd&&(help=vimHelp(t))){}
      else if(!ended&&t.startsWith('-')&&(help=option(c,t))){const k=t.replace(/^--?/,'');if(t==='--')ended=true;if((take[c]||[]).includes(k))flag=k;}
      else if(actions[c]?.[t])help=actions[c][t];
      else if(t==='!'&&c==='test')help='Inverte o resultado da condição que segue.';
@@ -195,6 +198,7 @@
      }
      else {const total=(i+1===lex.length||lex[i+1]?.[0]==='#')?pos+1:999;help=argument(c,t,pos++,total,lex[i-1]?.[0]);}
     }
+    if(!help&&inline&&lex.length===1&&!t.startsWith('-'))help=paths[t]||'Valor, nome ou símbolo apresentado no exemplo: '+t+'. Seu papel é indicado pelo comando ou pela explicação ao lado.';
     if(help)result.push({start:offset+m.index,end:offset+m.index+t.length,help});
    }
    carry=active&&/\|\s*$/.test(line)?'':active&&/\\\s*$/.test(line)?cmd:'';
@@ -221,7 +225,7 @@
    fragment.append(document.createTextNode(item.node.data.slice(at)));item.node.replaceWith(fragment);
   }
  }
- function scan(scope){const candidates=[...(scope.matches?.(selector)?[scope]:[]),...scope.querySelectorAll(selector)];for(const root of candidates){if(root.parentElement?.closest(selector))continue;annotate(root);}}
+ function scan(scope){while(scope.parentElement?.closest(selector))scope=scope.parentElement.closest(selector);const candidates=[...(scope.matches?.(selector)?[scope]:[]),...scope.querySelectorAll(selector)];for(const root of candidates){if(root.parentElement?.closest(selector))continue;annotate(root);}}
  const css=document.createElement('style');css.textContent=`.command-help-token{cursor:help;text-decoration-line:underline;text-decoration-style:dotted;text-decoration-color:currentColor;text-underline-offset:4px}.command-help-token:hover,.command-help-token:focus-visible{background:rgba(40,220,255,.14);border-radius:3px;outline:2px solid #28dcff;outline-offset:2px}#command-help-bubble{position:fixed;inset:auto;margin:0;box-sizing:border-box;max-width:min(360px,calc(100vw - 24px));padding:14px 17px;border:1px solid #62d9ef;border-radius:13px;background:#081528;color:#eff7ff;font:400 15px/1.5 system-ui,sans-serif;white-space:normal;text-align:left;box-shadow:0 12px 38px #0009;z-index:2147483647;overflow:auto;max-height:calc(100dvh - 24px)}#command-help-bubble[hidden]{display:none!important}#command-help-bubble b{display:block;color:#72e6ff;margin-bottom:5px}#command-help-bubble small{display:block;color:#aebdd3;margin-top:8px;font-size:11px}.command-help-info{font:inherit;border:1px solid #47738c;border-radius:9px;background:#0b2138;color:#d9f6ff;padding:7px 10px;cursor:pointer}.command-help-info:focus-visible{outline:2px solid #28dcff}@media print{#command-help-bubble,.command-help-info{display:none!important}.command-help-token{text-decoration:none}}`;
  document.head.append(css);
  const bubble=document.createElement('div');bubble.id='command-help-bubble';bubble.role='tooltip';bubble.hidden=true;bubble.setAttribute('popover','manual');document.body.append(bubble);
